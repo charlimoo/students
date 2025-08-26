@@ -1,23 +1,26 @@
+// start of components/PersianNewAdmissionForm.tsx
 import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { Progress } from './ui/progress';
 import { ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
-import { PersianAdmissionFormProps, PersianAdmissionFormData } from './types/persian-form-types';
-import { INITIAL_FORM_DATA } from './constants/persian-form-constants';
+import { AdmissionFormData, FormStepProps } from './types/form-types';
+import { INITIAL_FORM_DATA } from './constants/form-constants';
 import { PersonalInfoStep } from './form-steps/PersonalInfoStep';
 import { AcademicHistoryStep } from './form-steps/AcademicHistoryStep';
 import { UniversityProgramStep } from './form-steps/UniversityProgramStep';
 import { DocumentUploadStep } from './form-steps/DocumentUploadStep';
 import { ReviewStep } from './form-steps/ReviewStep';
 
-interface PersianNewAdmissionFormPropsWithNav extends PersianAdmissionFormProps {
+interface PersianNewAdmissionFormProps {
+  onBack: () => void;
+  onSubmit: () => void;
   onSaveDraft?: () => void;
 }
 
-export function PersianNewAdmissionForm({ onBack, onSubmit, onSaveDraft }: PersianNewAdmissionFormPropsWithNav) {
+export function PersianNewAdmissionForm({ onBack, onSubmit, onSaveDraft }: PersianNewAdmissionFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState<PersianAdmissionFormData>(INITIAL_FORM_DATA);
+  const [formData, setFormData] = useState<AdmissionFormData>(INITIAL_FORM_DATA);
 
   const handleInputChange = (key: string, value: string | File | null | any) => {
     setFormData(prev => ({

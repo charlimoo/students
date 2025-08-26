@@ -25,7 +25,7 @@ export function ReviewStep({ formData, onInputChange }: Omit<FormStepProps, 'onF
   };
 
   const getMissingFields = () => {
-    const missing = [];
+    const missing: string[] = []; // Corrected line
     if (!formData.fullName || !formData.fatherName || !formData.birthDate || !formData.nationality || !formData.email) {
       missing.push('Personal information is incomplete');
     }

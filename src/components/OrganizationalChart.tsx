@@ -25,7 +25,20 @@ const mockOrganizationalData = {
   ]
 };
 
-function TreeNode({ node, level, onSelect, selectedNode, expandedNodes, onToggleExpand }: { node: any; level: number; onSelect: (node: any) => void; selectedNode?: any; expandedNodes: Set<string>; onToggleExpand: (nodeId: string) => void; }) {
+// --- FIX STARTS HERE ---
+// Define the props for the TreeNode component using a type alias.
+type TreeNodeProps = {
+  node: any;
+  level: number;
+  onSelect: (node: any) => void;
+  selectedNode?: any;
+  expandedNodes: Set<string>;
+  onToggleExpand: (nodeId: string) => void;
+};
+
+// Use the defined type alias for the component's props.
+const TreeNode: React.FC<TreeNodeProps> = ({ node, level, onSelect, selectedNode, expandedNodes, onToggleExpand }) => {
+// --- FIX ENDS HERE ---
   const isExpanded = expandedNodes.has(node.id);
   const hasChildren = node.children && node.children.length > 0;
   const isSelected = selectedNode?.id === node.id;

@@ -1,27 +1,32 @@
-# ---- Builder Stage ----
-FROM node:20-alpine AS builder
+
+# ---- Build Stage ----
+# Use a specific Node LTS version on Alpine for smaller size
+FROM node:20-slim AS builder
 
 WORKDIR /app
 
-# Copy the package manifest and the yarn lockfile
-COPY package.json yarn.lock ./
+# Copy package.json and package-lock.json (or yarn.lock)
+COPY package.json package-lock.json ./
 
-# Install dependencies using Yarn. 
-# --frozen-lockfile ensures it uses the lockfile exclusively, which is best practice for CI/CD.
-RUN yarn install --frozen-lockfile
+RUN npm install -g npm@latest
 
-# Copy the rest of your application source code
+# Use npm ci for faster, deterministic installs based on lock file
+RUN npm i && npm i @rollup/rollup-linux-x64-musl
+
+# Copy the rest of the frontend source code
 COPY . .
 
-# Build the application using Yarn
-RUN yarn build
+# Build the React application
+RUN npm run build
 
 # ---- Production Stage ----
+# Use a stable Nginx Alpine image for minimal size
 FROM nginx:alpine
 
-# Copy the build output from the builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Expose port 80 and start nginx
+# Expose port 80 (standard HTTP)
 EXPOSE 80
+
+# Command to run Nginx in the foreground
 CMD ["nginx", "-g", "daemon off;"]
