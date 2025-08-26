@@ -1,7 +1,7 @@
 
 # ---- Build Stage ----
 # Use a specific Node LTS version on Alpine for smaller size
-FROM node:20-slim AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -11,7 +11,7 @@ COPY package.json package-lock.json ./
 RUN npm install -g npm@latest
 
 # Use npm ci for faster, deterministic installs based on lock file
-RUN npm i && npm i @rollup/rollup-linux-x64-musl
+RUN npm i
 
 # Copy the rest of the frontend source code
 COPY . .
