@@ -11,7 +11,7 @@ COPY package.json package-lock.json ./
 RUN npm install -g npm@latest
 
 # Use npm ci for faster, deterministic installs based on lock file
-RUN npm i
+RUN npm ci
 
 # Copy the rest of the frontend source code
 COPY . .
