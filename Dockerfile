@@ -1,7 +1,7 @@
 # start of frontend/Dockerfile
 # Stage 1: Build the React application
 # FROM node:18-alpine as build  <-- OLD LINE
-FROM node:18-slim as build      # <-- FIX: Use the Debian-based slim image for better compatibility
+FROM node:18-slim AS build
 
 # Set an argument for the API URL that can be passed during the build
 ARG VITE_API_URL
