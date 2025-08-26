@@ -145,7 +145,7 @@ export default function App() {
     if (primaryRole === 'applicant') {
         const studentPages: { [key: string]: React.ReactNode } = {
             'dashboard': <Dashboard onNavigate={navigate} onViewApplication={(id) => navigate('application-status', id)} />,
-            'select-application-type': <SelectApplicationType onBack={() => navigate('dashboard')} onSelectType={(type) => navigate('new-admission-application', type)} />,
+            'select-application-type': <SelectApplicationType onBack={() => navigate('dashboard')} onSelectType={(type) => navigate(type)} />,
             'new-admission-application': <NewAdmissionApplication onBackToDashboard={() => navigate('dashboard')} onNavigate={navigate} applicationId={selectedId} />,
             'my-applications': <MyApplications onBack={() => navigate('dashboard')} onViewApplication={(id) => navigate('application-status', id)} />,
             'application-status': <ApplicationStatus applicationId={selectedId} onBack={() => navigate('my-applications')} onNavigate={navigate} />,
