@@ -1,0 +1,112 @@
+// start of components/ApplicantDetailView.tsx
+//
+//  nouvel-Lime-Sour-Jaguar
+//
+// 2. START of components/ApplicantDetailView.tsx (New File)
+
+import React from 'react';
+import { Button } from './ui/button';
+import { Badge } from './ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { Avatar, AvatarFallback } from './ui/avatar';
+import { ArrowRight, User, GraduationCap, FileText, Download, Eye, Clock, Building, Phone, Mail, Globe, MessageSquare } from 'lucide-react';
+
+interface ApplicantDetailViewProps {
+  applicantId: string | null;
+  onBack: () => void;
+}
+
+// Mock data for applicants
+const mockApplicants = {
+  'APL-2024-001': {
+    id: 'APL-2024-001', name: 'علی محمدی', nationality: 'سوری', passportNumber: 'P1234567', email: 'ali.m@email.com', phone: '+963 987 654 321', dateOfBirth: '1998-05-20', university: 'دانشگاه تهران', degree: 'کارشناسی ارشد مهندسی کامپیوتر', status: 'در حال بررسی', submitDate: '۱۴۰۳/۰۸/۱۵', documents: [{ id: 'doc-1', name: 'کپی پاسپورت', status: 'تایید شده' }, { id: 'doc-2', name: 'مدرک کارشناسی', status: 'در حال بررسی' }], history: [{ date: '۱۴۰۳/۰۸/۱۵', action: 'درخواست ثبت شد', actor: 'موسسه' }]
+  },
+  'APL-2024-002': {
+    id: 'APL-2024-002', name: 'فاطمه احمدی', nationality: 'عراقی', passportNumber: 'A9876543', email: 'fatima.a@email.com', phone: '+964 123 456 789', dateOfBirth: '2000-01-10', university: 'دانشگاه صنعتی شریف', degree: 'کارشناسی مدیریت بازرگانی', status: 'تایید شده', submitDate: '۱۴۰۳/۰۷/۲۸', documents: [{ id: 'doc-1', name: 'کپی پاسپورت', status: 'تایید شده' }, { id: 'doc-2', name: 'مدرک دیپلم', status: 'تایید شده' }], history: [{ date: '۱۴۰۳/۰۸/۰۵', action: 'تایید نهایی', actor: 'کارشناس' }, { date: '۱۴۰۳/۰۷/۲۸', action: 'درخواست ثبت شد', actor: 'موسسه' }]
+  },
+  // Add more mock applicants if needed
+};
+
+export function ApplicantDetailView({ applicantId, onBack }: ApplicantDetailViewProps) {
+  const applicant = mockApplicants[applicantId as keyof typeof mockApplicants] || mockApplicants['APL-2024-001'];
+  const [activeTab, setActiveTab] = React.useState('summary');
+  
+  const getStatusBadge = (status: string) => {
+    if (status === 'تایید شده') return <Badge className="status-badge-approved">تایید شده</Badge>;
+    if (status === 'در حال بررسی') return <Badge className="status-badge-review">در حال بررسی</Badge>;
+    return <Badge variant="secondary">{status}</Badge>;
+  };
+
+  return (
+    <div className="flex-1 overflow-auto p-8" dir="rtl">
+        <button onClick={onBack} className="flex items-center space-x-2 space-x-reverse text-primary hover:underline mb-6">
+            <ArrowRight className="w-4 h-4" />
+            <span>بازگشت به لیست متقاضیان</span>
+        </button>
+      
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-1 space-y-6">
+                <Card className="card-modern">
+                    <CardHeader className="text-center pb-4">
+                        <Avatar className="w-24 h-24 mx-auto border-4 border-primary/10">
+                            <AvatarFallback className="bg-primary text-primary-foreground text-2xl">{applicant.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                        </Avatar>
+                        <CardTitle className="text-xl mt-4">{applicant.name}</CardTitle>
+                        <div className="flex items-center justify-center space-x-2 space-x-reverse mt-2 text-muted-foreground">
+                            <Globe className="w-4 h-4" />
+                            <span>{applicant.nationality}</span>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="flex items-center space-x-3 space-x-reverse"><Phone className="w-4 h-4 text-primary" /><span>{applicant.phone}</span></div>
+                        <div className="flex items-center space-x-3 space-x-reverse"><Mail className="w-4 h-4 text-primary" /><span>{applicant.email}</span></div>
+                    </CardContent>
+                </Card>
+            </div>
+            <div className="lg:col-span-2">
+                <Card className="card-modern">
+                    <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
+                        <TabsList className="grid w-full grid-cols-3 p-1 bg-muted rounded-t-lg">
+                            <TabsTrigger value="summary">خلاصه پرونده</TabsTrigger>
+                            <TabsTrigger value="documents">مدارک</TabsTrigger>
+                            <TabsTrigger value="history">گردش کار</TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="summary" className="p-6 space-y-4">
+                            <h3 className="persian-heading text-lg">اطلاعات درخواست</h3>
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div><strong className="text-muted-foreground">دانشگاه مقصد:</strong> {applicant.university}</div>
+                                <div><strong className="text-muted-foreground">رشته درخواستی:</strong> {applicant.degree}</div>
+                                <div><strong className="text-muted-foreground">تاریخ ثبت:</strong> {applicant.submitDate}</div>
+                                <div><strong className="text-muted-foreground">وضعیت:</strong> {getStatusBadge(applicant.status)}</div>
+                            </div>
+                        </TabsContent>
+                        <TabsContent value="documents" className="p-6 space-y-3">
+                            {applicant.documents.map(doc => (
+                                <div key={doc.id} className="flex items-center justify-between p-3 border rounded-lg">
+                                    <div className="font-medium">{doc.name}</div>
+                                    <Badge variant="outline">{doc.status}</Badge>
+                                </div>
+                            ))}
+                        </TabsContent>
+                        <TabsContent value="history" className="p-6 space-y-4">
+                            {applicant.history.map(item => (
+                                <div key={item.date} className="flex items-start space-x-4 space-x-reverse">
+                                    <Clock className="w-4 h-4 text-muted-foreground mt-1"/>
+                                    <div>
+                                        <strong>{item.action}</strong>
+                                        <div className="text-xs text-muted-foreground">{item.date} توسط {item.actor}</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </TabsContent>
+                    </Tabs>
+                </Card>
+            </div>
+        </div>
+    </div>
+  );
+}
+// 2. END of components/ApplicantDetailView.tsx (New File)
+// end of components/ApplicantDetailView.tsx

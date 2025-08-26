@@ -1,0 +1,154 @@
+// start of components/PersianNewApplicationFormByInstitution.tsx
+//
+//  nouvel-Lime-Sour-Jaguar
+//
+// 1. START of components/PersianNewApplicationFormByInstitution.tsx (New File)
+
+import React, { useState } from 'react';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+import { 
+  ArrowRight, 
+  Upload, 
+  FileText,
+  User,
+  GraduationCap,
+  CheckCircle,
+  Calendar,
+  Flag,
+  IdCard,
+  Save,
+  Send
+} from 'lucide-react';
+
+interface PersianNewApplicationFormByInstitutionProps {
+  onBack: () => void;
+  onSubmit: () => void;
+  onSaveDraft: () => void;
+}
+
+export function PersianNewApplicationFormByInstitution({ onBack, onSubmit, onSaveDraft }: PersianNewApplicationFormByInstitutionProps) {
+  const [formData, setFormData] = useState({
+    fullName: '',
+    fatherName: '',
+    gender: '',
+    dateOfBirth: '',
+    nationality: '',
+    passportNumber: '',
+    lastDegree: '',
+    fieldOfStudy: '',
+    previousUniversity: '',
+    passportScan: null as File | null,
+    personalPhoto: null as File | null,
+    transcript: null as File | null,
+  });
+
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+
+  const handleInputChange = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleFileUpload = (field: string, file: File | null) => {
+    setFormData(prev => ({ ...prev, [field]: file }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setShowSuccessDialog(true);
+  };
+
+  const handleSuccessConfirm = () => {
+    setShowSuccessDialog(false);
+    onSubmit();
+  };
+
+  return (
+    <div className="flex-1 overflow-auto p-8" dir="rtl">
+        <div className="flex items-center justify-between mb-8">
+            <div>
+                <h1 className="text-3xl text-foreground persian-heading">ثبت درخواست جدید برای متقاضی</h1>
+                <p className="text-muted-foreground persian-text">
+                    برای ثبت درخواست پذیرش جدید، تمام بخش‌های زیر را تکمیل کنید
+                </p>
+            </div>
+            <Button
+                variant="ghost"
+                onClick={onBack}
+                className="flex items-center space-x-2 space-x-reverse text-muted-foreground hover:text-foreground"
+            >
+                <ArrowRight className="w-4 h-4" />
+                <span>بازگشت به داشبورد</span>
+            </Button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Section 1: Personal Information */}
+          <Card className="card-modern">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-3 space-x-reverse">
+                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center"><User className="w-5 h-5 text-primary" /></div>
+                <span className="persian-heading">۱. اطلاعات فردی</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-right">
+                <div className="space-y-2"><Label htmlFor="fullName" className="persian-text">نام کامل *</Label><Input id="fullName" value={formData.fullName} onChange={(e) => handleInputChange('fullName', e.target.value)} placeholder="نام کامل متقاضی" className="persian-text" required /></div>
+                <div className="space-y-2"><Label htmlFor="fatherName" className="persian-text">نام پدر *</Label><Input id="fatherName" value={formData.fatherName} onChange={(e) => handleInputChange('fatherName', e.target.value)} placeholder="نام پدر متقاضی" className="persian-text" required /></div>
+                <div className="space-y-2"><Label htmlFor="gender" className="persian-text">جنسیت *</Label><Select onValueChange={(v) => handleInputChange('gender', v)}><SelectTrigger><SelectValue placeholder="انتخاب جنسیت" /></SelectTrigger><SelectContent><SelectItem value="male">مرد</SelectItem><SelectItem value="female">زن</SelectItem></SelectContent></Select></div>
+                <div className="space-y-2"><Label htmlFor="dateOfBirth" className="persian-text">تاریخ تولد *</Label><Input id="dateOfBirth" type="date" value={formData.dateOfBirth} onChange={(e) => handleInputChange('dateOfBirth', e.target.value)} required /></div>
+                <div className="space-y-2"><Label htmlFor="nationality" className="persian-text">ملیت *</Label><Select onValueChange={(v) => handleInputChange('nationality', v)}><SelectTrigger><SelectValue placeholder="انتخاب ملیت" /></SelectTrigger><SelectContent>{['افغانستانی', 'عراقی', 'سوری', 'پاکستانی', 'سایر'].map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}</SelectContent></Select></div>
+                <div className="space-y-2"><Label htmlFor="passportNumber" className="persian-text">شماره گذرنامه *</Label><Input id="passportNumber" value={formData.passportNumber} onChange={(e) => handleInputChange('passportNumber', e.target.value)} placeholder="شماره گذرنامه" required /></div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Section 2: Academic History */}
+          <Card className="card-modern">
+            <CardHeader><CardTitle className="flex items-center space-x-3 space-x-reverse"><div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center"><GraduationCap className="w-5 h-5 text-primary" /></div><span className="persian-heading">۲. سوابق تحصیلی</span></CardTitle></CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-right">
+                <div className="space-y-2"><Label className="persian-text">آخرین مدرک تحصیلی *</Label><Select onValueChange={(v) => handleInputChange('lastDegree', v)}><SelectTrigger><SelectValue placeholder="انتخاب مقطع" /></SelectTrigger><SelectContent><SelectItem value="bachelor">کارشناسی</SelectItem><SelectItem value="master">کارشناسی ارشد</SelectItem></SelectContent></Select></div>
+                <div className="space-y-2"><Label className="persian-text">رشته تحصیلی *</Label><Input placeholder="مثال: مهندسی کامپیوتر" value={formData.fieldOfStudy} onChange={(e) => handleInputChange('fieldOfStudy', e.target.value)} required /></div>
+                <div className="md:col-span-2 space-y-2"><Label className="persian-text">دانشگاه قبلی *</Label><Input placeholder="نام کامل دانشگاه" value={formData.previousUniversity} onChange={(e) => handleInputChange('previousUniversity', e.target.value)} required /></div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Section 3: Document Upload */}
+          <Card className="card-modern">
+            <CardHeader><CardTitle className="flex items-center space-x-3 space-x-reverse"><div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center"><Upload className="w-5 h-5 text-primary" /></div><span className="persian-heading">۳. بارگذاری مدارک</span></CardTitle></CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 text-right">
+              <div className="space-y-2"><Label>اسکن گذرنامه *</Label><div className="border-2 border-dashed p-6 text-center"><Upload className="w-8 h-8 mx-auto mb-2" /><p className="text-sm">انتخاب فایل</p></div></div>
+              <div className="space-y-2"><Label>عکس پرسنلی *</Label><div className="border-2 border-dashed p-6 text-center"><Upload className="w-8 h-8 mx-auto mb-2" /><p className="text-sm">انتخاب فایل</p></div></div>
+              <div className="space-y-2"><Label>آخرین ریزنمرات *</Label><div className="border-2 border-dashed p-6 text-center"><Upload className="w-8 h-8 mx-auto mb-2" /><p className="text-sm">انتخاب فایل</p></div></div>
+            </CardContent>
+          </Card>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-end">
+            <Button type="button" variant="secondary" onClick={onSaveDraft} className="persian-text"><Save className="w-4 h-4 ml-2" />ذخیره پیش‌نویس</Button>
+            <Button type="submit" className="button-primary flex items-center space-x-2 space-x-reverse persian-text"><Send className="w-4 h-4" /><span>ارسال درخواست</span></Button>
+          </div>
+        </form>
+
+        <AlertDialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+          <AlertDialogContent dir="rtl">
+            <AlertDialogHeader>
+                <div className="flex justify-center"><CheckCircle className="w-16 h-16 text-success" /></div>
+                <AlertDialogTitle className="text-center persian-heading">درخواست با موفقیت ثبت شد!</AlertDialogTitle>
+                <AlertDialogDescription className="text-center persian-text">درخواست متقاضی با موفقیت ثبت شد و برای بررسی ارسال گردید. می‌توانید وضعیت آن را در لیست متقاضیان پیگیری کنید.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogAction onClick={handleSuccessConfirm} className="w-full button-primary persian-text">بازگشت به داشبورد</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+    </div>
+  );
+}
+// 1. END of components/PersianNewApplicationFormByInstitution.tsx (New File)
+// end of components/PersianNewApplicationFormByInstitution.tsx

@@ -1,0 +1,457 @@
+// start of components/PersianInstitutionDashboard.tsx
+import React, { useState } from 'react';
+import { Button } from './ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Badge } from './ui/badge';
+import { Progress } from './ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { 
+  Building2, 
+  Users, 
+  FileText, 
+  Clock, 
+  CheckCircle, 
+  AlertCircle,
+  TrendingUp,
+  Bell,
+  Settings,
+  LogOut,
+  Plus,
+  Search,
+  Filter,
+  Calendar,
+  UserCheck,
+  GraduationCap,
+  Globe,
+  Mail,
+  Phone,
+  MapPin,
+  Download,
+  Eye,
+  MoreHorizontal,
+  BarChart3,
+  PieChart
+} from 'lucide-react';
+
+interface PersianInstitutionDashboardProps {
+  onNavigate: (page: string, applicationId?: string) => void;
+  onLogout: () => void;
+}
+
+export function PersianInstitutionDashboard({ onNavigate, onLogout }: PersianInstitutionDashboardProps) {
+  const [activeTab, setActiveTab] = useState('overview');
+
+  // Mock data for Persian institution dashboard
+  const applicants = [
+    {
+      id: 'APL-2024-001',
+      name: 'علی محمدی',
+      program: 'مهندسی کامپیوتر',
+      status: 'در حال بررسی',
+      statusType: 'pending',
+      submittedDate: '۱۴۰۳/۰۸/۱۵',
+      university: 'دانشگاه تهران',
+      progress: 65
+    },
+    {
+      id: 'APL-2024-002', 
+      name: 'فاطمه احمدی',
+      program: 'مدیریت بازرگانی',
+      status: 'تایید شده',
+      statusType: 'approved',
+      submittedDate: '۱۴۰۳/۰۷/۲۸',
+      university: 'دانشگاه شریف',
+      progress: 100
+    },
+    {
+      id: 'APL-2024-003',
+      name: 'محمد رضایی',
+      program: 'مهندسی برق', 
+      status: 'نیاز به بررسی',
+      statusType: 'review',
+      submittedDate: '۱۴۰۳/۰۸/۱۰',
+      university: 'دانشگاه امیرکبیر',
+      progress: 25
+    }
+  ];
+
+  const recentActivity = [
+    {
+      type: 'new-application',
+      title: 'درخواست جدید دریافت شد',
+      description: 'متقاضی جدید برای رشته مهندسی کامپیوتر ثبت‌نام کرده است',
+      time: '۳۰ دقیقه پیش',
+      icon: FileText,
+      color: 'text-primary'
+    },
+    {
+      type: 'status-update',
+      title: 'بروزرسانی وضعیت متقاضی',
+      description: 'درخواست علی محمدی به مرحله بررسی نهایی رسیده است',
+      time: '۲ ساعت پیش',
+      icon: CheckCircle,
+      color: 'text-success'
+    },
+    {
+      type: 'deadline-reminder',
+      title: 'یادآوری ضرب‌الاجل',
+      description: 'مهلت بررسی ۵ درخواست تا فردا به پایان می‌رسد',
+      time: '۴ ساعت پیش',
+      icon: Clock,
+      color: 'text-warning'
+    }
+  ];
+
+  const stats = {
+    totalApplicants: 24,
+    pendingReview: 8,
+    approved: 12,
+    successRate: 78
+  };
+
+  const getStatusBadgeClass = (statusType: string) => {
+    switch (statusType) {
+      case 'approved':
+        return 'status-badge-approved';
+      case 'pending':
+        return 'status-badge-pending';
+      case 'review':
+        return 'status-badge-review';
+      case 'rejected':
+        return 'status-badge-rejected';
+      default:
+        return 'status-badge-pending';
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background persian-text" dir="rtl">
+      {/* Header */}
+      <div className="border-b border-border bg-card">
+        <div className="container-modern py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4 space-x-reverse">
+              <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
+                <Building2 className="w-6 h-6 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="text-2xl persian-heading text-foreground">داشبورد موسسه</h1>
+                <p className="text-sm text-muted-foreground">مدیریت متقاضیان و پیگیری درخواست‌ها</p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-4 space-x-reverse">
+              <Button variant="outline" size="sm" className="persian-text">
+                <Bell className="w-4 h-4 ml-2" />
+                اعلان‌ها
+              </Button>
+              <Button variant="outline" size="sm" className="persian-text">
+                <Settings className="w-4 h-4 ml-2" />
+                تنظیمات
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => onNavigate('login')}
+                className="persian-text"
+              >
+                <LogOut className="w-4 h-4 ml-2" />
+                خروج
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="container-modern py-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-4 h-12 bg-muted/50 rounded-xl p-1 mb-8">
+            <TabsTrigger value="overview" className="persian-text">
+              <BarChart3 className="w-4 h-4 ml-2" />
+              خلاصه
+            </TabsTrigger>
+            <TabsTrigger value="applicants" className="persian-text">
+              <Users className="w-4 h-4 ml-2" />
+              متقاضیان
+            </TabsTrigger>
+            <TabsTrigger value="applications" className="persian-text">
+              <FileText className="w-4 h-4 ml-2" />
+              درخواست‌ها
+            </TabsTrigger>
+            <TabsTrigger value="reports" className="persian-text">
+              <PieChart className="w-4 h-4 ml-2" />
+              گزارش‌ها
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-8">
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card className="card-modern">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground persian-text">کل متقاضیان</p>
+                      <p className="text-2xl font-bold text-foreground">{stats.totalApplicants}</p>
+                    </div>
+                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                      <Users className="w-6 h-6 text-primary" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="card-modern">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground persian-text">در انتظار بررسی</p>
+                      <p className="text-2xl font-bold text-foreground">{stats.pendingReview}</p>
+                    </div>
+                    <div className="w-12 h-12 bg-warning/10 rounded-lg flex items-center justify-center">
+                      <Clock className="w-6 h-6 text-warning" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="card-modern">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground persian-text">پذیرفته شده</p>
+                      <p className="text-2xl font-bold text-foreground">{stats.approved}</p>
+                    </div>
+                    <div className="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center">
+                      <CheckCircle className="w-6 h-6 text-success" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="card-modern">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground persian-text">نرخ موفقیت</p>
+                      <p className="text-2xl font-bold text-foreground">٪{stats.successRate}</p>
+                    </div>
+                    <div className="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center">
+                      <TrendingUp className="w-6 h-6 text-success" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Recent Applications & Activity */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Recent Applications */}
+              <Card className="card-modern">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="persian-heading">متقاضیان اخیر</CardTitle>
+                    <Button variant="outline" size="sm" className="persian-text">
+                      مشاهده همه
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {applicants.slice(0, 3).map((applicant) => (
+                    <div key={applicant.id} className="flex items-center justify-between p-4 border border-border rounded-lg">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 space-x-reverse mb-2">
+                          <p className="persian-text font-medium text-foreground">{applicant.name}</p>
+                          <Badge className={getStatusBadgeClass(applicant.statusType)}>
+                            {applicant.status}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground persian-text">{applicant.program} - {applicant.university}</p>
+                        <div className="flex items-center space-x-2 space-x-reverse mt-2">
+                          <Progress value={applicant.progress} className="flex-1 h-2" />
+                          <span className="text-xs text-muted-foreground">{applicant.progress}%</span>
+                        </div>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => onNavigate('application-status', applicant.id)}
+                        className="mr-2"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              {/* Recent Activity */}
+              <Card className="card-modern">
+                <CardHeader>
+                  <CardTitle className="persian-heading">فعالیت‌های اخیر</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {recentActivity.map((activity, index) => {
+                    const ActivityIcon = activity.icon;
+                    return (
+                      <div key={index} className="flex items-start space-x-4 space-x-reverse">
+                        <div className={`w-10 h-10 rounded-lg bg-muted flex items-center justify-center ${activity.color}`}>
+                          <ActivityIcon className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="persian-text font-medium text-foreground text-sm">{activity.title}</p>
+                          <p className="persian-text text-muted-foreground text-xs mt-1">{activity.description}</p>
+                          <p className="persian-text text-muted-foreground text-xs mt-2">{activity.time}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Quick Actions */}
+            <Card className="card-modern">
+              <CardHeader>
+                <CardTitle className="persian-heading">عملیات سریع</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Button 
+                    className="button-primary flex items-center space-x-2 space-x-reverse h-auto p-6"
+                    onClick={() => onNavigate('new-application-form')}
+                  >
+                    <Plus className="w-5 h-5" />
+                    <div className="text-right">
+                      <p className="font-medium">درخواست جدید</p>
+                      <p className="text-xs opacity-90">ثبت متقاضی جدید</p>
+                    </div>
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    className="persian-text flex items-center space-x-2 space-x-reverse h-auto p-6"
+                    onClick={() => onNavigate('my-applicants')}
+                  >
+                    <Users className="w-5 h-5" />
+                    <div className="text-right">
+                      <p className="font-medium">مدیریت متقاضیان</p>
+                      <p className="text-xs opacity-70">پیگیری وضعیت متقاضیان</p>
+                    </div>
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    className="persian-text flex items-center space-x-2 space-x-reverse h-auto p-6"
+                  >
+                    <BarChart3 className="w-5 h-5" />
+                    <div className="text-right">
+                      <p className="font-medium">مشاهده گزارش‌ها</p>
+                      <p className="text-xs opacity-70">آمار و تحلیل عملکرد</p>
+                    </div>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Applicants Tab */}
+          <TabsContent value="applicants">
+            <Card className="card-modern">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="persian-heading">همه متقاضیان</CardTitle>
+                  <div className="flex items-center space-x-4 space-x-reverse">
+                    <Button variant="outline" size="sm" className="persian-text">
+                      <Filter className="w-4 h-4 ml-2" />
+                      فیلتر
+                    </Button>
+                    <Button variant="outline" size="sm" className="persian-text">
+                      <Search className="w-4 h-4 ml-2" />
+                      جستجو
+                    </Button>
+                    <Button className="button-primary persian-text">
+                      <Plus className="w-4 h-4 ml-2" />
+                      متقاضی جدید
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {applicants.map((applicant) => (
+                    <div key={applicant.id} className="border border-border rounded-lg p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center space-x-4 space-x-reverse">
+                          <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <UserCheck className="w-6 h-6 text-primary" />
+                          </div>
+                          <div>
+                            <h3 className="persian-text font-semibold text-foreground">{applicant.name}</h3>
+                            <p className="text-sm text-muted-foreground persian-text">{applicant.program}</p>
+                            <p className="text-xs text-muted-foreground persian-text">{applicant.university}</p>
+                          </div>
+                        </div>
+                        <Badge className={getStatusBadgeClass(applicant.statusType)}>
+                          {applicant.status}
+                        </Badge>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4 space-x-reverse text-sm text-muted-foreground">
+                          <div className="flex items-center space-x-2 space-x-reverse">
+                            <Calendar className="w-4 h-4" />
+                            <span className="persian-text">تاریخ ثبت: {applicant.submittedDate}</span>
+                          </div>
+                          <div className="flex items-center space-x-2 space-x-reverse">
+                            <span className="persian-text">پیشرفت: {applicant.progress}%</span>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2 space-x-reverse">
+                          <Button variant="outline" size="sm">
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button variant="outline" size="sm">
+                            <Mail className="w-4 h-4" />
+                          </Button>
+                          <Button variant="outline" size="sm">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Other tabs would be similarly structured */}
+          <TabsContent value="applications">
+            <Card className="card-modern">
+              <CardContent className="p-12 text-center">
+                <FileText className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-xl font-semibold text-foreground mb-2 persian-heading">مدیریت درخواست‌ها</h3>
+                <p className="text-muted-foreground persian-text">این بخش به زودی راه‌اندازی خواهد شد</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="reports">
+            <Card className="card-modern">
+              <CardContent className="p-12 text-center">
+                <PieChart className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-xl font-semibold text-foreground mb-2 persian-heading">گزارش‌ها و آمار</h3>
+                <p className="text-muted-foreground persian-text">این بخش به زودی راه‌اندازی خواهد شد</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+}
+// end of components/PersianInstitutionDashboard.tsx

@@ -1,0 +1,79 @@
+export interface AcademicRecord {
+  id: string; // A unique client-side ID for list rendering (e.g., Date.now())
+  degree: string;
+  country: string;
+  university: string;
+  field: string;
+  gpa: string;
+  documentFile: File | null; // This is for potential future use, not in the current backend model
+}
+
+export interface UniversityProgramChoice {
+  id: string; // A unique client-side ID
+  priority: number;
+  university: string;        // The display name of the university
+  universityId: number | null; // The ID to be sent to the backend API
+  field: string;             // The display name of the program
+  fieldId: number | null;      // The ID to be sent to the backend API
+}
+
+export interface DocumentUpload {
+  id: string; // A unique client-side ID
+  documentType: string;
+  file: File | null;
+}
+
+// --- Main Form Data Structure ---
+
+export interface AdmissionFormData {
+  application_type: string;
+  fullName: string;
+  fatherName: string;
+  grandfatherName: string;
+  birthDate: string;
+  nationality: string; // This corresponds to 'country_of_residence' on the backend
+  email: string;
+  
+  // Section 2: سوابق تحصیلی
+  academicRecords: AcademicRecord[];
+  
+  // Section 3: دانشگاه و رشته
+  universityPrograms: UniversityProgramChoice[];
+  degreeType: string;
+  entryYear: string;
+  motivationLetter: string;
+  previousExperience: string;
+  
+  // Section 4: بارگذاری مدارک
+  passportScan: File | null;
+  personalPhoto: File | null;
+  educationCertificate: File | null;
+  documentUploads: DocumentUpload[];
+
+  confirmSubmission?: boolean;
+}
+
+export interface PersianAdmissionFormProps {
+  onBack: () => void;
+  onSubmit: () => void;
+}
+
+export interface FormStepProps {
+  formData: AdmissionFormData;
+  onInputChange: (key: keyof AdmissionFormData, value: any) => void;
+  // This prop is kept for potential future use, though not used in the current backend model
+  onFileUpload?: (key: string, file: File | null) => void; 
+  validationErrors?: Record<string, string>; // Optional validation errors from API
+}
+
+export interface AcademicHistoryStepProps extends FormStepProps {
+  onAddRecord: (record: AcademicRecord) => void;
+  onRemoveRecord: (recordId: string) => void;
+  onUpdateRecord: (recordId: string, field: string, value: string | File | null) => void;
+}
+
+export interface UniversityProgramStepProps extends FormStepProps {
+  onAddProgram: (program: UniversityProgramChoice) => void;
+  onRemoveProgram: (programId: string) => void;
+  onUpdateProgram: (programId: string, field: string, value: string) => void;
+}

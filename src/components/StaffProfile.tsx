@@ -1,0 +1,129 @@
+import React, { useState } from 'react';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { Checkbox } from './ui/checkbox';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Badge } from './ui/badge';
+import { Separator } from './ui/separator';
+import { toast } from 'sonner';
+import {
+  User,
+  Shield,
+  Bell,
+  Save,
+  Eye,
+  EyeOff,
+  CheckCircle,
+  Lock,
+  Mail,
+  Building,
+  IdCard,
+  Edit3,
+  LogOut,
+  Camera
+} from 'lucide-react';
+
+interface StaffProfileProps {
+  onNavigate: (page: string) => void;
+}
+
+export function StaffProfile({ onNavigate }: StaffProfileProps) {
+  const [activeTab, setActiveTab] = useState('user-info');
+  const [isEditing, setIsEditing] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+
+  const [userInfo, setUserInfo] = useState({
+    fullName: 'احمد محمدی',
+    role: 'کارشناس ارشد',
+    department: 'واحد امور دانشجویان',
+    phoneNumber: '۰۹۱۲۳۴۵۶۷۸۹',
+    email: 'ahmad.mohammadi@university.ir',
+    employeeId: 'EMP-2023-001'
+  });
+
+  const handleSave = () => {
+    setIsEditing(false);
+    toast.success('تغییرات با موفقیت ذخیره شد');
+  };
+
+  return (
+    <div className="flex-1 overflow-auto p-8">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold text-foreground persian-heading">پروفایل کاربری و تنظیمات</h1>
+        <Button onClick={() => isEditing ? handleSave() : setIsEditing(true)}>
+          <Edit3 className="w-4 h-4 ml-2" />
+          {isEditing ? 'ذخیره تغییرات' : 'ویرایش پروفایل'}
+        </Button>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="lg:col-span-1">
+          <Card className="card-modern sticky top-6">
+            <CardContent className="p-6 text-center">
+              <div className="relative inline-block mb-6">
+                <Avatar className="w-32 h-32 border-4 border-primary/20"><AvatarFallback className="bg-primary text-primary-foreground text-4xl">ا.م</AvatarFallback></Avatar>
+                {isEditing && <label className="absolute bottom-0 left-0 bg-primary text-primary-foreground p-2 rounded-full cursor-pointer"><Camera className="w-4 h-4" /><input type="file" className="hidden" /></label>}
+              </div>
+              <h3 className="text-xl font-bold">{userInfo.fullName}</h3>
+              <Badge className="mt-2">{userInfo.role}</Badge>
+              <p className="text-sm text-muted-foreground mt-2">{userInfo.department}</p>
+            </CardContent>
+          </Card>
+        </div>
+        <div className="lg:col-span-3">
+          <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
+            <TabsList className="grid w-full grid-cols-3 bg-card border rounded-lg p-1">
+              <TabsTrigger value="user-info" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md"><User className="w-4 h-4 ml-2" />اطلاعات کاربری</TabsTrigger>
+              <TabsTrigger value="security" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md"><Shield className="w-4 h-4 ml-2" />امنیت</TabsTrigger>
+              <TabsTrigger value="notifications" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md"><Bell className="w-4 h-4 ml-2" />اعلان‌ها</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="user-info" className="mt-6">
+              <Card className="card-modern">
+                <CardHeader><CardTitle>اطلاعات شخصی</CardTitle></CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2 text-right"><Label>نام کامل</Label><Input value={userInfo.fullName} disabled className="bg-muted"/></div>
+                    <div className="space-y-2 text-right"><Label>نقش سازمانی</Label><Input value={userInfo.role} disabled className="bg-muted"/></div>
+                    <div className="space-y-2 text-right"><Label>ایمیل</Label><Input value={userInfo.email} disabled={!isEditing} /></div>
+                    <div className="space-y-2 text-right"><Label>شماره تماس</Label><Input value={userInfo.phoneNumber} disabled={!isEditing} /></div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="security" className="mt-6">
+              <Card className="card-modern">
+                <CardHeader><CardTitle>تغییر رمز عبور</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2 text-right"><Label>رمز عبور فعلی</Label><Input type="password" /></div>
+                  <div className="space-y-2 text-right"><Label>رمز عبور جدید</Label><Input type="password" /></div>
+                  <div className="space-y-2 text-right"><Label>تکرار رمز عبور جدید</Label><Input type="password" /></div>
+                  <div className="flex justify-end"><Button>تغییر رمز</Button></div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="notifications" className="mt-6">
+               <Card className="card-modern">
+                <CardHeader><CardTitle>تنظیمات اعلان‌ها</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="text-right">
+                      <h4 className="font-medium">اعلان‌های ایمیل</h4>
+                      <p className="text-sm text-muted-foreground">دریافت بروزرسانی وضعیت پرونده‌ها از طریق ایمیل</p>
+                    </div>
+                    <Checkbox defaultChecked />
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+    </div>
+  );
+}

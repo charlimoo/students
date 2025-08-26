@@ -1,0 +1,264 @@
+import React from 'react';
+import { Button } from './ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Badge } from './ui/badge';
+import { ArrowRight, CheckCircle, Clock, Circle, FileText, University, Building2, UserCheck, Award } from 'lucide-react';
+
+interface PersianApplicationStatusProps {
+  applicationId: string | null;
+  onBack: () => void;
+}
+
+export function PersianApplicationStatus({ applicationId, onBack }: PersianApplicationStatusProps) {
+  // Determine application type and current step based on applicationId
+  const getApplicationInfo = () => {
+    if (applicationId?.includes('admission')) {
+      return {
+        title: 'درخواست پذیرش',
+        currentStep: 2, // Currently at university review
+        applicationNumber: 'ADM-2024-1001'
+      };
+    } else if (applicationId?.includes('visa-extension')) {
+      return {
+        title: 'درخواست تمدید ویزا',
+        currentStep: 3, // Currently at provincial review
+        applicationNumber: 'VIS-2024-2001'
+      };
+    } else {
+      return {
+        title: 'درخواست عمومی',
+        currentStep: 1, // Currently at submitted stage
+        applicationNumber: 'GEN-2024-3001'
+      };
+    }
+  };
+
+  const appInfo = getApplicationInfo();
+
+  const processSteps = [
+    {
+      id: 1,
+      title: 'درخواست ثبت شد',
+      description: 'درخواست شما با موفقیت در سیستم ثبت شده است',
+      icon: FileText,
+      date: '۱۴۰۳/۰۸/۱۵ - ۱۰:۳۰'
+    },
+    {
+      id: 2,
+      title: 'بررسی دانشگاه',
+      description: 'درخواست در حال بررسی توسط دانشگاه مورد نظر',
+      icon: University,
+      date: '۱۴۰۳/۰۸/۱۶ - ۰۹:۱۵'
+    },
+    {
+      id: 3,
+      title: 'بررسی استانی',
+      description: 'بررسی توسط اداره کل آموزش عالی استان',
+      icon: Building2,
+      date: ''
+    },
+    {
+      id: 4,
+      title: 'بررسی ستاد سازمان',
+      description: 'بررسی نهایی توسط ستاد مرکزی سازمان',
+      icon: UserCheck,
+      date: ''
+    },
+    {
+      id: 5,
+      title: 'نتیجه نهایی',
+      description: 'اعلام نتیجه نهایی و صدور مجوز',
+      icon: Award,
+      date: ''
+    }
+  ];
+
+  const getStepStatus = (stepId: number) => {
+    if (stepId < appInfo.currentStep) return 'completed';
+    if (stepId === appInfo.currentStep) return 'current';
+    return 'pending';
+  };
+
+  const getStatusIcon = (stepId: number) => {
+    const status = getStepStatus(stepId);
+    const step = processSteps.find(s => s.id === stepId);
+    const IconComponent = step?.icon || Circle;
+
+    if (status === 'completed') {
+      return <CheckCircle className="w-6 h-6 text-success" />;
+    } else if (status === 'current') {
+      return <Clock className="w-6 h-6 text-primary animate-pulse" />;
+    } else {
+      return <Circle className="w-6 h-6 text-muted-foreground" />;
+    }
+  };
+
+  const getStatusBadge = (stepId: number) => {
+    const status = getStepStatus(stepId);
+    
+    if (status === 'completed') {
+      return <Badge className="bg-success text-success-foreground persian-text text-xs">تکمیل شده</Badge>;
+    } else if (status === 'current') {
+      return <Badge className="bg-primary text-primary-foreground persian-text text-xs">در حال انجام</Badge>;
+    } else {
+      return <Badge variant="secondary" className="persian-text text-xs">در انتظار</Badge>;
+    }
+  };
+
+  const getOverallStatus = () => {
+    if (appInfo.currentStep === 1) return 'ثبت شده';
+    if (appInfo.currentStep === 2) return 'در حال بررسی';
+    if (appInfo.currentStep === 3) return 'بررسی استانی';
+    if (appInfo.currentStep === 4) return 'بررسی ستاد';
+    if (appInfo.currentStep === 5) return 'تکمیل شده';
+    return 'در حال بررسی';
+  };
+
+  return (
+    <div className="min-h-screen bg-background persian-text" dir="rtl">
+      {/* Header */}
+      <div className="border-b border-border bg-card">
+        <div className="max-w-4xl mx-auto px-6 py-6">
+          <button 
+            onClick={onBack}
+            className="flex items-center space-x-2 space-x-reverse text-primary hover:underline mb-6"
+          >
+            <ArrowRight className="w-4 h-4" />
+            <span className="persian-text">بازگشت به داشبورد</span>
+          </button>
+          
+          <div className="space-y-4 text-right">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h1 className="text-3xl text-foreground persian-heading">{appInfo.title}</h1>
+                <p className="text-muted-foreground persian-text">شماره درخواست: {appInfo.applicationNumber}</p>
+              </div>
+              <div className="flex items-center space-x-2 space-x-reverse">
+                <span className="persian-text text-muted-foreground">وضعیت:</span>
+                <Badge className="bg-primary text-primary-foreground persian-text">
+                  {getOverallStatus()}
+                </Badge>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-6 py-8">
+        {/* Status Overview Card */}
+        <Card className="card-modern mb-8">
+          <CardContent className="pt-6">
+            <div className="text-center space-y-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
+                <FileText className="w-8 h-8 text-primary" />
+              </div>
+              <h2 className="persian-heading text-xl">درخواست شما در حال پردازش است</h2>
+              <p className="text-muted-foreground persian-text max-w-md mx-auto">
+                درخواست شما در مرحله {processSteps.find(s => s.id === appInfo.currentStep)?.title} قرار دارد. 
+                زمان تقریبی پردازش: ۳-۵ روز کاری
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Process Timeline */}
+        <Card className="card-modern">
+          <CardHeader>
+            <CardTitle className="persian-heading text-right">مراحل پردازش درخواست</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-0">
+              {processSteps.map((step, index) => {
+                const isLast = index === processSteps.length - 1;
+                const status = getStepStatus(step.id);
+                
+                return (
+                  <div key={step.id} className="relative">
+                    {/* Connecting Line */}
+                    {!isLast && (
+                      <div className="absolute right-3 top-12 w-0.5 h-16 bg-border"></div>
+                    )}
+                    
+                    <div className="flex items-start space-x-4 space-x-reverse pb-8">
+                      {/* Status Icon */}
+                      <div className="flex-shrink-0 w-6 h-6 mt-1">
+                        {getStatusIcon(step.id)}
+                      </div>
+                      
+                      {/* Content */}
+                      <div className="flex-1 min-w-0 pr-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className={`persian-heading ${
+                            status === 'current' ? 'text-primary' : 
+                            status === 'completed' ? 'text-success' : 
+                            'text-muted-foreground'
+                          }`}>
+                            {step.title}
+                          </h3>
+                          {getStatusBadge(step.id)}
+                        </div>
+                        
+                        <p className="text-sm text-muted-foreground persian-text mb-2">
+                          {step.description}
+                        </p>
+                        
+                        {step.date && (
+                          <p className="text-xs text-muted-foreground persian-text">
+                            {step.date}
+                          </p>
+                        )}
+                        
+                        {status === 'current' && (
+                          <div className="mt-3 p-3 bg-primary-50 border border-primary/20 rounded-lg">
+                            <p className="text-sm text-primary persian-text">
+                              <Clock className="w-4 h-4 inline ml-2" />
+                              این مرحله در حال انجام است. لطفاً تا اتمام بررسی صبر کنید.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+          <Button variant="outline" className="persian-text">
+            دانلود رسید درخواست
+          </Button>
+          <Button variant="outline" className="persian-text">
+            تماس با پشتیبانی
+          </Button>
+        </div>
+
+        {/* Additional Information */}
+        <Card className="card-modern mt-6">
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              <h3 className="persian-heading text-lg text-center">اطلاعات مهم</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm persian-text">
+                <div className="p-4 bg-muted/30 rounded-lg">
+                  <h4 className="persian-heading text-primary mb-2">زمان پاسخگویی</h4>
+                  <p className="text-muted-foreground">
+                    شنبه تا چهارشنبه: ۸:۰۰ تا ۱۶:۰۰<br />
+                    پنج‌شنبه: ۸:۰۰ تا ۱۳:۰۰
+                  </p>
+                </div>
+                <div className="p-4 bg-muted/30 rounded-lg">
+                  <h4 className="persian-heading text-primary mb-2">مدارک مورد نیاز</h4>
+                  <p className="text-muted-foreground">
+                    در صورت درخواست مدارک تکمیلی، از طریق پیامک اطلاع‌رسانی خواهید شد.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,118 @@
+// start of components/InstitutionDashboard.tsx
+import React, { useState, useEffect } from 'react';
+import { Button } from './ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Badge } from './ui/badge';
+import { 
+  Users, 
+  Clock, 
+  CheckCircle, 
+  Eye,
+  BarChart3,
+  UserPlus,
+  RefreshCw,
+  XCircle 
+} from 'lucide-react';
+import apiService from '../api/apiService';
+import { toast } from 'sonner';
+
+interface InstitutionDashboardProps {
+  onNavigate: (page: string, id?: string) => void;
+}
+
+interface ApiStats {
+    total_applicants: number;
+    pending_review: number;
+    approved: number;
+    rejected: number;
+}
+interface ApiApplication {
+    tracking_code: string;
+    full_name: string;
+    application_type: string;
+    status: 'PENDING_REVIEW' | 'PENDING_CORRECTION' | 'APPROVED' | 'REJECTED';
+}
+
+export function InstitutionDashboard({ onNavigate }: InstitutionDashboardProps) {
+  const [stats, setStats] = useState<ApiStats | null>(null);
+  const [recentApplicants, setRecentApplicants] = useState<ApiApplication[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+        const [statsRes, appsRes] = await Promise.all([
+            apiService.get('/v1/choices/dashboard-stats/'),
+            apiService.get('/v1/applications/my-submitted/?page_size=5')
+        ]);
+        setStats(statsRes.data.institution_dashboard);
+        setRecentApplicants(appsRes.data.results || appsRes.data);
+    } catch (error) {
+        toast.error("Failed to load dashboard data.");
+    } finally {
+        setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+  
+  const getStatusBadge = (status: string) => {
+    if (status === 'APPROVED') return <Badge className="status-badge-approved">تایید شده</Badge>;
+    if (status === 'PENDING_REVIEW' || status === 'PENDING_CORRECTION') return <Badge className="status-badge-review">در حال بررسی</Badge>;
+    if (status === 'REJECTED') return <Badge className="status-badge-rejected">رد شده</Badge>;
+    return <Badge variant="secondary">{status}</Badge>;
+  };
+
+  return (
+    <div className="flex-1 overflow-auto p-8" dir="rtl">
+        <div className="flex items-center justify-between mb-8">
+            <div>
+                <h1 className="text-3xl persian-heading text-foreground">داشبورد موسسه</h1>
+                <p className="text-muted-foreground">خلاصه وضعیت متقاضیان شما در اینجا آمده است.</p>
+            </div>
+            <div className="flex items-center space-x-2 space-x-reverse">
+                <Button variant="outline" size="sm" onClick={fetchData} disabled={isLoading}><RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} /></Button>
+                <Button className="flex items-center space-x-2 space-x-reverse" onClick={() => onNavigate('new-application-form')}>
+                    <UserPlus className="w-4 h-4" />
+                    <span>ثبت درخواست جدید</span>
+                </Button>
+            </div>
+        </div>
+        
+        {isLoading ? <div className="text-center p-8"><RefreshCw className="w-8 h-8 animate-spin mx-auto"/></div> : (
+        <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <Card className="card-modern"><CardContent className="p-6"><div className="flex items-center space-x-3 space-x-reverse"><div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center"><Users className="w-6 h-6 text-primary" /></div><div><p className="text-2xl font-bold">{stats?.total_applicants ?? 0}</p><p className="text-sm text-muted-foreground">کل متقاضیان</p></div></div></CardContent></Card>
+                <Card className="card-modern"><CardContent className="p-6"><div className="flex items-center space-x-3 space-x-reverse"><div className="w-12 h-12 bg-warning/10 rounded-xl flex items-center justify-center"><Clock className="w-6 h-6 text-warning" /></div><div><p className="text-2xl font-bold">{stats?.pending_review ?? 0}</p><p className="text-sm text-muted-foreground">در انتظار بررسی</p></div></div></CardContent></Card>
+                <Card className="card-modern"><CardContent className="p-6"><div className="flex items-center space-x-3 space-x-reverse"><div className="w-12 h-12 bg-success/10 rounded-xl flex items-center justify-center"><CheckCircle className="w-6 h-6 text-success" /></div><div><p className="text-2xl font-bold">{stats?.approved ?? 0}</p><p className="text-sm text-muted-foreground">پذیرفته شده</p></div></div></CardContent></Card>
+                <Card className="card-modern"><CardContent className="p-6"><div className="flex items-center space-x-3 space-x-reverse"><div className="w-12 h-12 bg-destructive/10 rounded-xl flex items-center justify-center"><XCircle className="w-6 h-6 text-destructive" /></div><div><p className="text-2xl font-bold">{stats?.rejected ?? 0}</p><p className="text-sm text-muted-foreground">رد شده</p></div></div></CardContent></Card>
+            </div>
+
+            <div className="grid grid-cols-1">
+                <Card className="card-modern">
+                    <CardHeader><CardTitle className="persian-heading">متقاضیان اخیر</CardTitle></CardHeader>
+                    <CardContent className="space-y-4">
+                        {recentApplicants.length > 0 ? recentApplicants.map((applicant) => (
+                            <div key={applicant.tracking_code} className="flex items-center justify-between p-4 border rounded-lg">
+                                <div>
+                                    <p className="font-medium">{applicant.full_name}</p>
+                                    <p className="text-sm text-muted-foreground">{applicant.application_type}</p>
+                                </div>
+                                <div className="flex items-center space-x-3 space-x-reverse">
+                                    {getStatusBadge(applicant.status)}
+                                    <Button variant="ghost" size="sm" onClick={() => onNavigate('applicant-detail', applicant.tracking_code)} className="mr-2"><Eye className="w-4 h-4" /></Button>
+                                </div>
+                            </div>
+                        )) : (
+                            <p className="text-center text-muted-foreground py-8">هیچ متقاضی اخیری یافت نشد.</p>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
+        </>
+        )}
+      </div>
+  );
+}

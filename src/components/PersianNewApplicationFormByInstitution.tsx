@@ -1,0 +1,170 @@
+// start of components/PersianNewApplicationFormByInstitution.tsx
+import React, { useState } from 'react';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+import { 
+  ArrowRight, 
+  Upload, 
+  FileText,
+  User,
+  GraduationCap,
+  CheckCircle,
+  Calendar,
+  Flag,
+  IdCard,
+  Save,
+  Send,
+  UserPlus,
+  RefreshCw,
+  BookOpen
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { AdmissionFormData } from './types/form-types';
+import { INITIAL_FORM_DATA } from './constants/form-constants';
+import { PersonalInfoStep } from './form-steps/PersonalInfoStep';
+import { AcademicHistoryStep } from './form-steps/AcademicHistoryStep';
+import { UniversityProgramStep } from './form-steps/UniversityProgramStep';
+import { DocumentUploadStep } from './form-steps/DocumentUploadStep';
+import { ReviewStep } from './form-steps/ReviewStep';
+import apiService from '../api/apiService';
+import { Progress } from './ui/progress';
+
+interface PersianNewApplicationFormByInstitutionProps {
+  onBack: () => void;
+  onSubmit: () => void;
+  onSaveDraft: () => void;
+}
+
+const ApplicantInfoStep = ({ email, onEmailChange, validationError }: { email: string, onEmailChange: (value: string) => void, validationError?: string }) => (
+    <Card className="card-modern" dir="rtl">
+        <CardHeader><CardTitle className="flex items-center space-x-2 space-x-reverse"><UserPlus className="w-5 h-5 text-primary" /><span>اطلاعات دانشجو</span></CardTitle></CardHeader>
+        <CardContent>
+            <div className="space-y-2">
+                <Label htmlFor="applicant_email">ایمیل دانشجو *</Label>
+                <Input id="applicant_email" type="email" value={email} onChange={(e) => onEmailChange(e.target.value)} placeholder="ایمیل دانشجو را برای ایجاد حساب کاربری وارد کنید" required dir="ltr"/>
+                {validationError && <p className="text-sm text-destructive mt-1">{validationError}</p>}
+                <p className="text-xs text-muted-foreground mt-1">یک حساب کاربری برای این دانشجو ایجاد یا به حساب موجود متصل خواهد شد.</p>
+            </div>
+        </CardContent>
+    </Card>
+);
+
+
+export function PersianNewApplicationFormByInstitution({ onBack, onSubmit, onSaveDraft }: PersianNewApplicationFormByInstitutionProps) {
+  const [currentStep, setCurrentStep] = useState(1);
+  const [formData, setFormData] = useState<AdmissionFormData>({ ...INITIAL_FORM_DATA, applicant_email: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+
+  const handleInputChange = (key: string, value: any) => {
+    setFormData(prev => ({ ...prev, [key]: value }));
+    if (validationErrors[key]) setValidationErrors(prev => ({...prev, [key]: ''}));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setValidationErrors({});
+    
+    const payload = new FormData();
+    payload.append('applicant_email', formData.email); // Use the student's email
+    payload.append('full_name', formData.fullName);
+    payload.append('father_name', formData.fatherName);
+    payload.append('date_of_birth', formData.birthDate);
+    payload.append('country_of_residence', formData.nationality);
+    payload.append('email', formData.email);
+    if(formData.grandfatherName) payload.append('grandfather_name', formData.grandfatherName);
+
+    formData.academicRecords.forEach((r, i) => {
+        payload.append(`academic_histories[${i}]degree_level`, r.degree);
+        payload.append(`academic_histories[${i}]country`, r.country);
+        payload.append(`academic_histories[${i}]university_name`, r.university);
+        payload.append(`academic_histories[${i}]field_of_study`, r.field);
+        payload.append(`academic_histories[${i}]gpa`, r.gpa);
+    });
+    formData.universityPrograms.forEach((p, i) => {
+        if(p.universityId) payload.append(`university_choices[${i}]university_id`, String(p.universityId));
+        if(p.fieldId) payload.append(`university_choices[${i}]program_id`, String(p.fieldId));
+        payload.append(`university_choices[${i}]priority`, String(p.priority));
+    });
+    formData.documentUploads.forEach((d, i) => {
+        if(d.file && d.documentType) {
+            payload.append(`documents[${i}]document_type`, d.documentType);
+            payload.append(`documents[${i}]file`, d.file);
+        }
+    });
+
+    try {
+        payload.append('application_type', 'NEW_ADMISSION');
+        const response = await apiService.post('/v1/applications/', payload, { headers: { 'Content-Type': 'multipart/form-data' } });
+        toast.success("درخواست با موفقیت ثبت شد!", { description: `کد رهگیری: ${response.data.tracking_code}` });
+        setTimeout(onSubmit, 1500);
+    } catch (error: any) {
+        if (error.response && error.response.status === 400) {
+            setValidationErrors(error.response.data);
+            toast.error("ثبت ناموفق", { description: "لطفا خطاهای فرم را برطرف کنید." });
+        } else {
+            toast.error("یک خطای پیش‌بینی نشده رخ داد.");
+        }
+    } finally {
+        setIsSubmitting(false);
+    }
+  };
+
+  const STEPS_WITH_STUDENT_INFO = [
+      { id: 1, label: 'اطلاعات فردی دانشجو', icon: User },
+      { id: 2, label: 'سوابق تحصیلی', icon: GraduationCap },
+      { id: 3, label: 'دانشگاه و رشته', icon: BookOpen },
+      { id: 4, label: 'بارگذاری مدارک', icon: Upload },
+      { id: 5, label: 'بازبینی و ثبت', icon: CheckCircle },
+  ];
+
+  const renderStepContent = () => {
+    const stepProps = { formData, onInputChange: handleInputChange, validationErrors };
+    switch (currentStep) {
+      case 1: return <PersonalInfoStep {...stepProps} />;
+      case 2: return <AcademicHistoryStep {...stepProps} />;
+      case 3: return <UniversityProgramStep {...stepProps} />;
+      case 4: return <DocumentUploadStep {...stepProps} />;
+      case 5: return <ReviewStep {...stepProps} />;
+      default: return null;
+    }
+  };
+  
+  const currentProgress = (currentStep / STEPS_WITH_STUDENT_INFO.length) * 100;
+
+  return (
+    <div className="flex-1 overflow-auto p-8" dir="rtl">
+        <div className="flex items-center justify-between mb-8">
+            <div>
+                <h1 className="text-3xl text-foreground persian-heading">ثبت درخواست جدید برای متقاضی</h1>
+                <p className="text-muted-foreground persian-text">تمام بخش‌های زیر را برای ثبت درخواست پذیرش جدید تکمیل کنید.</p>
+            </div>
+            <Button variant="ghost" onClick={onBack} className="flex items-center space-x-2 space-x-reverse"><ArrowRight className="w-4 h-4" /><span>بازگشت</span></Button>
+        </div>
+        
+        <div className="mb-8 p-4 bg-card border rounded-lg">
+            <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium">مرحله {currentStep} از {STEPS_WITH_STUDENT_INFO.length}: {STEPS_WITH_STUDENT_INFO[currentStep-1].label}</span>
+                <span className="text-sm text-muted-foreground">{Math.round(currentProgress)}% تکمیل شده</span>
+            </div>
+            <Progress value={currentProgress} className="h-2" />
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-8">
+            {renderStepContent()}
+            <div className="flex flex-col sm:flex-row gap-4 justify-between pt-6 border-t mt-8">
+                <div><Button type="button" variant="outline" onClick={() => setCurrentStep(p => p - 1)} disabled={currentStep === 1}>مرحله قبل</Button></div>
+                <div className="flex gap-4">
+                    <Button type="button" variant="secondary" onClick={onSaveDraft}><Save className="w-4 h-4 ml-2" />ذخیره پیش‌نویس</Button>
+                    {currentStep < 5 ? <Button type="button" onClick={() => setCurrentStep(p => p + 1)}>مرحله بعد</Button> : <Button type="submit" disabled={isSubmitting || !formData.confirmSubmission}>{isSubmitting ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 ml-2"/>}{isSubmitting ? 'در حال ارسال...' : 'ارسال درخواست'}</Button>}
+                </div>
+            </div>
+        </form>
+    </div>
+  );
+}

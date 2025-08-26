@@ -1,0 +1,54 @@
+// start of components/LanguageSwitcher.tsx
+import React from 'react';
+import { Globe } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu';
+import { Button } from './ui/button';
+
+interface LanguageSwitcherProps {
+  currentLanguage: 'english' | 'persian';
+  onLanguageChange: (language: 'english' | 'persian') => void;
+  className?: string;
+}
+
+export function LanguageSwitcher({ currentLanguage, onLanguageChange, className = '' }: LanguageSwitcherProps) {
+  const currentLanguageDisplay = currentLanguage === 'english' ? 'English' : 'فارسی';
+  const otherLanguage = currentLanguage === 'english' ? 'persian' : 'english';
+  const otherLanguageDisplay = currentLanguage === 'english' ? 'فارسی' : 'English';
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className={`flex items-center space-x-2 space-x-reverse bg-white hover:bg-gray-50 border-border ${className}`}
+        >
+          <Globe className="w-4 h-4 text-muted-foreground" />
+          <span className="text-sm font-medium text-foreground">{currentLanguageDisplay}</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-[120px]">
+        <DropdownMenuItem 
+          onClick={() => onLanguageChange(currentLanguage)}
+          className="flex items-center space-x-2 space-x-reverse cursor-pointer"
+        >
+          <div className="w-2 h-2 rounded-full bg-primary"></div>
+          <span className="font-medium">{currentLanguageDisplay}</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem 
+          onClick={() => onLanguageChange(otherLanguage)}
+          className="flex items-center space-x-2 space-x-reverse cursor-pointer"
+        >
+          <div className="w-2 h-2 rounded-full bg-muted-foreground"></div>
+          <span>{otherLanguageDisplay}</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+// end of components/LanguageSwitcher.tsx

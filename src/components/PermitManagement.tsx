@@ -1,0 +1,118 @@
+import React, { useState } from 'react';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { Badge } from './ui/badge';
+import { toast } from 'sonner';
+import { Shield, Plus, Search, Filter, Eye, RefreshCw, XCircle, FileText, History, GraduationCap, BookOpen, UserCheck } from 'lucide-react';
+
+interface PermitManagementProps {
+  onNavigate: (page: string) => void;
+}
+
+const mockUniversityPermits = [
+  { id: 'u1', name: 'دانشگاه تهران', status: 'فعال', issueDate: '۱۴۰۲/۰۳/۱۵', expiryDate: '۱۴۰۴/۰۳/۱۵', permitNumber: 'UP-2023-001', studentCapacity: 500, currentStudents: 450 },
+  { id: 'u2', name: 'دانشگاه صنعتی شریف', status: 'فعال', issueDate: '۱۴۰۲/۰۲/۲۰', expiryDate: '۱۴۰۴/۰۲/۲۰', permitNumber: 'UP-2023-002', studentCapacity: 300, currentStudents: 280 },
+  { id: 'u3', name: 'دانشگاه اصفهان', status: 'منقضی شده', issueDate: '۱۴۰۱/۰۵/۱۰', expiryDate: '۱۴۰۳/۰۵/۱۰', permitNumber: 'UP-2022-003', studentCapacity: 250, currentStudents: 200 },
+  { id: 'u4', name: 'دانشگاه فردوسی مشهد', status: 'در انتظار بررسی', issueDate: '', expiryDate: '', permitNumber: 'UP-2024-001', studentCapacity: 400, currentStudents: 0 }
+];
+const mockAzfaPermits = [
+  { id: 'a1', name: 'مرکز آزفا تهران', status: 'فعال', issueDate: '۱۴۰۲/۰۴/۰۱', expiryDate: '۱۴۰۴/۰۴/۰۱', permitNumber: 'AP-2023-001', capacity: 200, currentStudents: 180 },
+  { id: 'a2', name: 'مرکز آزفا اصفهان', status: 'فعال', issueDate: '۱۴۰۲/۰۶/۱۵', expiryDate: '۱۴۰۴/۰۶/۱۵', permitNumber: 'AP-2023-002', capacity: 150, currentStudents: 140 },
+  { id: 'a3', name: 'مرکز آزفا شیراز', status: 'در انتظار بررسی', issueDate: '', expiryDate: '', permitNumber: 'AP-2024-001', capacity: 100, currentStudents: 0 }
+];
+const mockRecruitmentPermits = [
+  { id: 'r1', name: 'موسسه جذب دانشجو پارس', status: 'فعال', issueDate: '۱۴۰۲/۰۷/۱۰', expiryDate: '۱۴۰۴/۰۷/۱۰', permitNumber: 'RP-2023-001', quotaCapacity: 1000, processedApplications: 750 },
+  { id: 'r2', name: 'موسسه خدمات آموزشی آریا', status: 'منقضی شده', issueDate: '۱۴۰۱/۰۹/۰۵', expiryDate: '۱۴۰۳/۰۹/۰۵', permitNumber: 'RP-2022-002', quotaCapacity: 500, processedApplications: 480 },
+  { id: 'r3', name: 'موسسه بین‌المللی توسعه تحصیل', status: 'فعال', issueDate: '۱۴۰۲/۰۸/۲۰', expiryDate: '۱۴۰۴/۰۸/۲۰', permitNumber: 'RP-2023-003', quotaCapacity: 800, processedApplications: 650 }
+];
+
+export function PermitManagement({ onNavigate }: PermitManagementProps) {
+  const [activeTab, setActiveTab] = useState('universities');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedPermit, setSelectedPermit] = useState<any>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showNewRequestsModal, setShowNewRequestsModal] = useState(false);
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'فعال': return <Badge className="bg-success text-success-foreground">فعال</Badge>;
+      case 'منقضی شده': return <Badge variant="destructive">منقضی شده</Badge>;
+      case 'در انتظار بررسی': return <Badge className="bg-warning text-warning-foreground">در انتظار بررسی</Badge>;
+      default: return <Badge variant="secondary">{status}</Badge>;
+    }
+  };
+  const handleViewDetails = (permit: any) => { setSelectedPermit(permit); setShowDetailsModal(true); };
+  const handleRenewPermit = async (permitId: string) => { await new Promise(resolve => setTimeout(resolve, 1000)); toast.success('درخواست تمدید ارسال شد'); };
+  const handleCancelPermit = async (permitId: string) => { await new Promise(resolve => setTimeout(resolve, 1000)); toast.warning('مجوز لغو شد'); };
+
+  const getCurrentPermitData = () => {
+    switch (activeTab) {
+      case 'universities': return mockUniversityPermits;
+      case 'azfa': return mockAzfaPermits;
+      case 'recruitment': return mockRecruitmentPermits;
+      default: return [];
+    }
+  };
+  const getTabTitle = () => {
+    switch (activeTab) {
+      case 'universities': return 'مجوز دانشگاه‌ها';
+      case 'azfa': return 'مجوز مراکز آزفا';
+      case 'recruitment': return 'مجوز موسسات جذب';
+      default: return '';
+    }
+  };
+  const getTabIcon = () => {
+    switch (activeTab) {
+      case 'universities': return <GraduationCap className="w-5 h-5 text-blue-600" />;
+      case 'azfa': return <BookOpen className="w-5 h-5 text-green-600" />;
+      case 'recruitment': return <UserCheck className="w-5 h-5 text-purple-600" />;
+      default: return <Shield className="w-5 h-5" />;
+    }
+  };
+
+  const currentData = getCurrentPermitData();
+  const filteredData = currentData.filter(item => item.name.includes(searchQuery) || item.status.includes(searchQuery) || (item.permitNumber && item.permitNumber.includes(searchQuery)));
+
+  return (
+    <div className="flex-1 section-padding">
+      <div className="container-modern">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3 h-12 bg-white rounded-xl p-1 shadow-sm">
+            <TabsTrigger value="universities" className="flex items-center space-x-2 space-x-reverse"><GraduationCap className="w-4 h-4" /><span>مجوز دانشگاه‌ها</span></TabsTrigger>
+            <TabsTrigger value="azfa" className="flex items-center space-x-2 space-x-reverse"><BookOpen className="w-4 h-4" /><span>مجوز مراکز آزفا</span></TabsTrigger>
+            <TabsTrigger value="recruitment" className="flex items-center space-x-2 space-x-reverse"><UserCheck className="w-4 h-4" /><span>مجوز موسسات جذب</span></TabsTrigger>
+          </TabsList>
+
+          <TabsContent value={activeTab} className="space-y-6">
+            <Card className="card-modern">
+              <CardHeader className="border-b border-border">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center space-x-3 space-x-reverse"><div className="p-2 bg-blue-100 rounded-lg">{getTabIcon()}</div><span className="text-xl font-bold">{getTabTitle()}</span></CardTitle>
+                  <Button><Plus className="w-4 h-4 ml-2" /><span>بررسی درخواست‌ها</span></Button>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center space-x-4 space-x-reverse">
+                    <div className="relative"><Search className="absolute right-3 top-1/2 -translate-y-1/2" /><Input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="جستجو..." className="pr-10" /></div>
+                    <Button variant="outline"><Filter className="w-4 h-4 ml-2" />فیلتر</Button>
+                  </div>
+                  <p className="text-sm">تعداد مجوزها: {filteredData.length}</p>
+                </div>
+
+                <div className="border border-border rounded-lg overflow-hidden">
+                  <table className="w-full text-right"><thead className="bg-muted/50"><tr><th className="px-4 py-3">نام</th><th className="px-4 py-3">وضعیت</th><th className="px-4 py-3">شماره مجوز</th><th className="px-4 py-3">تاریخ انقضا</th><th className="px-4 py-3">عملیات</th></tr></thead><tbody>
+                    {filteredData.map((permit, index) => (<tr key={permit.id} className="border-t"><td className="px-4 py-3">{permit.name}</td><td className="px-4 py-3">{getStatusBadge(permit.status)}</td><td className="px-4 py-3">{permit.permitNumber}</td><td className="px-4 py-3">{permit.expiryDate || '—'}</td><td className="px-4 py-3"><div className="flex items-center space-x-2 space-x-reverse"><Button variant="ghost" size="sm"><Eye className="w-4 h-4" /></Button><Button variant="ghost" size="sm"><RefreshCw className="w-4 h-4" /></Button><Button variant="ghost" size="sm"><XCircle className="w-4 h-4" /></Button></div></td></tr>))}
+                  </tbody></table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,148 @@
+// start of frontend/src/components/form-steps/UniversityProgramStep.tsx
+import React, { useState, useEffect } from 'react'; // Add useEffect
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Button } from '../ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import { Plus, Trash2, BookOpen } from 'lucide-react';
+import { FormStepProps, UniversityProgramChoice } from '../types/form-types';
+import apiService from '../../api/apiService';
+import { toast } from 'sonner';
+
+interface ApiUniversity {
+  id: number;
+  name: string;
+}
+
+interface ApiProgram {
+  id: number;
+  name: string;
+}
+
+export function UniversityProgramStep({ formData, onInputChange }: FormStepProps) {
+  const [universityPrograms, setUniversityPrograms] = useState<UniversityProgramChoice[]>(formData.universityPrograms || []);
+  const [newProgram, setNewProgram] = useState<Partial<UniversityProgramChoice>>({ university: '', field: '', universityId: null });
+  
+  const [universities, setUniversities] = useState<ApiUniversity[]>([]);
+  const [availablePrograms, setAvailablePrograms] = useState<ApiProgram[]>([]);
+  const [isLoadingUniversities, setIsLoadingUniversities] = useState(true);
+  const [isLoadingPrograms, setIsLoadingPrograms] = useState(false);
+
+    useEffect(() => {
+    setUniversityPrograms(formData.universityPrograms || []);
+  }, [formData.universityPrograms]);
+  
+  // Effect to fetch the list of all universities on component mount
+  useEffect(() => {
+    const fetchUniversities = async () => {
+      setIsLoadingUniversities(true);
+      try {
+        // The API returns a paginated object, so we need to access the `results` property.
+        const response = await apiService.get('/v1/choices/universities/');
+        // FIX: Handle paginated response by checking for `response.data.results`.
+        setUniversities(response.data.results || response.data);
+      } catch (error) {
+        toast.error('Could not load universities. Please refresh.');
+      } finally {
+        setIsLoadingUniversities(false);
+      }
+    };
+    fetchUniversities();
+  }, []);
+
+  // Effect to fetch programs when a university is selected
+  useEffect(() => {
+    const fetchProgramsForUniversity = async () => {
+      if (!newProgram.universityId) {
+        setAvailablePrograms([]);
+        setNewProgram(p => ({ ...p, field: '', fieldId: null }));
+        return;
+      }
+      setIsLoadingPrograms(true);
+      setNewProgram(p => ({ ...p, field: '', fieldId: null }));
+      try {
+        const response = await apiService.get(`/v1/choices/universities/${newProgram.universityId}/programs/`);
+        // FIX: Handle the paginated response for programs by accessing the .results key
+        setAvailablePrograms(response.data.results || response.data);
+      } catch (error) {
+        toast.error('Could not load programs for the selected university.');
+        setAvailablePrograms([]);
+      } finally {
+        setIsLoadingPrograms(false);
+      }
+    };
+    fetchProgramsForUniversity();
+  }, [newProgram.universityId]);
+
+  const handleAddProgram = () => {
+    if (newProgram.university && newProgram.field && newProgram.universityId) {
+      const selectedProgram = availablePrograms.find(p => p.name === newProgram.field);
+      const program: UniversityProgramChoice = {
+        id: Date.now().toString(),
+        priority: universityPrograms.length + 1,
+        university: newProgram.university!,
+        universityId: newProgram.universityId!,
+        field: newProgram.field!,
+        fieldId: selectedProgram ? selectedProgram.id : null,
+      };
+      const updatedPrograms = [...universityPrograms, program];
+      setUniversityPrograms(updatedPrograms);
+      onInputChange('universityPrograms', updatedPrograms);
+      setNewProgram({ university: '', field: '', universityId: null });
+    }
+  };
+
+  const handleRemoveProgram = (programId: string) => {
+    const updatedPrograms = universityPrograms.filter(p => p.id !== programId).map((p, i) => ({ ...p, priority: i + 1 }));
+    setUniversityPrograms(updatedPrograms);
+    onInputChange('universityPrograms', updatedPrograms);
+  };
+
+  return (
+    <Card className="card-modern">
+      <CardHeader><CardTitle className="flex items-center space-x-2"><BookOpen className="w-5 h-5 text-primary" /><span>Requested University & Program</span></CardTitle></CardHeader>
+      <CardContent className="space-y-6">
+        <div className="border rounded-lg overflow-hidden"><Table><TableHeader><TableRow><TableHead>Priority</TableHead><TableHead>University *</TableHead><TableHead>Program *</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader><TableBody>
+          {universityPrograms.length === 0 ? <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">No university choices added. Add 1 to 3 choices.</TableCell></TableRow> : universityPrograms.map(p => (
+            <TableRow key={p.id}>
+              <TableCell><div className="w-8 h-8 bg-primary/10 text-primary rounded-full flex items-center justify-center font-medium">{p.priority}</div></TableCell>
+              <TableCell>{p.university}</TableCell><TableCell>{p.field}</TableCell>
+              <TableCell><Button type="button" variant="ghost" size="sm" onClick={() => handleRemoveProgram(p.id)} className="text-destructive"><Trash2 className="w-4 h-4" /></Button></TableCell>
+            </TableRow>
+          ))}
+        </TableBody></Table></div>
+        
+        {universityPrograms.length < 3 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted/20 rounded-lg">
+            <Select onValueChange={id => {
+              const selectedUni = universities.find(u => u.id === Number(id));
+              setNewProgram(p => ({...p, university: selectedUni?.name, universityId: selectedUni?.id}));
+            }} disabled={isLoadingUniversities}>
+              <SelectTrigger><SelectValue placeholder={isLoadingUniversities ? "Loading..." : "Select University"} /></SelectTrigger>
+              <SelectContent>{universities.map(u => <SelectItem key={u.id} value={String(u.id)}>{u.name}</SelectItem>)}</SelectContent>
+            </Select>
+            <Select onValueChange={v => setNewProgram(p => ({...p, field: v}))} disabled={!newProgram.universityId || isLoadingPrograms}>
+              <SelectTrigger><SelectValue placeholder={isLoadingPrograms ? "Loading programs..." : "Select Program"} /></SelectTrigger>
+              <SelectContent>
+                {availablePrograms.length > 0 ? (
+                  availablePrograms.map(prog => <SelectItem key={prog.id} value={prog.name}>{prog.name}</SelectItem>)
+                ) : (
+                  <SelectItem value="none" disabled>
+                    {newProgram.universityId ? "No programs available" : "Select a university first"}
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        
+        <div className="flex justify-end pt-2">
+          {universityPrograms.length < 3 ? (
+            <Button type="button" onClick={handleAddProgram} disabled={!newProgram.university || !newProgram.field}><Plus className="w-4 h-4 mr-2" />Add New Choice</Button>
+          ) : <p className="text-sm text-muted-foreground">Maximum of 3 choices reached.</p>}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+// end of frontend/src/components/form-steps/UniversityProgramStep.tsx

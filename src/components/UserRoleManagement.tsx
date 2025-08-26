@@ -1,0 +1,192 @@
+// start of components/UserRoleManagement.tsx
+import React, { useState, useEffect } from 'react';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from './ui/dialog';
+import { Badge } from './ui/badge';
+import { toast } from 'sonner';
+import { Users, UserPlus, Shield, Edit, UserX, Plus, Search, Filter, Save, LogIn } from 'lucide-react';
+import apiService from '../api/apiService';
+import { useAuth } from '../context/AuthContext';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+interface UserRoleManagementProps {
+  onNavigate: (page: string) => void;
+}
+
+// --- Type Definitions ---
+interface ApiRole {
+  id: number;
+  name: string;
+  description: string;
+}
+interface ApiUser {
+  id: number;
+  full_name: string;
+  email: string;
+  is_active: boolean;
+  roles: number[]; 
+  is_superuser?: boolean;
+}
+
+export function UserRoleManagement({ onNavigate }: UserRoleManagementProps) {
+  const { user, isImpersonating } = useAuth();
+  const [activeTab, setActiveTab] = useState('users');
+  const [users, setUsers] = useState<ApiUser[]>([]);
+  const [roles, setRoles] = useState<ApiRole[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  const [editingUser, setEditingUser] = useState<ApiUser | null>(null);
+  const [showEditUserModal, setShowEditUserModal] = useState(false);
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const [usersRes, rolesRes] = await Promise.all([
+          apiService.get('/v1/management/'),
+          apiService.get('/v1/roles/'),
+        ]);
+        setUsers(usersRes.data.results || usersRes.data);
+        setRoles(rolesRes.data.results || rolesRes.data);
+      } catch (error) {
+        toast.error("Failed to load user management data.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const openEditModal = (userToEdit: ApiUser) => {
+    setEditingUser({ ...userToEdit });
+    setShowEditUserModal(true);
+  };
+
+  const handleUserUpdateField = (field: keyof ApiUser, value: any) => {
+    if (editingUser) {
+        if (field === 'roles') {
+            const roleId = Number(value);
+            const newRoles = editingUser.roles.includes(roleId)
+                ? editingUser.roles.filter(id => id !== roleId)
+                : [...editingUser.roles, roleId];
+            setEditingUser({ ...editingUser, roles: newRoles });
+        } else {
+            setEditingUser({ ...editingUser, [field]: value });
+        }
+    }
+  };
+
+  const handleUpdateUser = async () => {
+    if (!editingUser) return;
+    try {
+      const response = await apiService.patch(`/v1/management/${editingUser.id}/`, {
+          roles: editingUser.roles,
+          is_active: editingUser.is_active,
+      });
+      setUsers(users.map(u => (u.id === editingUser.id ? { ...u, ...response.data } : u)));
+      toast.success(`User ${editingUser.full_name} updated successfully.`);
+      setShowEditUserModal(false);
+    } catch (error: any) {
+      if (error.response?.status === 400 && error.response.data.roles) {
+        toast.error("Update Failed", { description: error.response.data.roles[0] });
+      } else {
+        toast.error("An unexpected error occurred during update.");
+      }
+    }
+  };
+
+  const handleImpersonate = async (targetUser: ApiUser) => {
+    if (isImpersonating) {
+        toast.warning("Please stop your current impersonation session first.");
+        return;
+    }
+    const adminToken = localStorage.getItem('accessToken');
+    if (!adminToken) return;
+    
+    toast.info(`Attempting to impersonate ${targetUser.full_name}...`);
+    
+    try {
+        const response = await apiService.post(`/v1/impersonate/${targetUser.id}/start/`);
+        const { access, refresh } = response.data;
+        // Store admin token before overwriting
+        localStorage.setItem('adminToken', adminToken);
+        localStorage.setItem('accessToken', access);
+        localStorage.setItem('refreshToken', refresh);
+        window.location.reload(); 
+    } catch (error: any) {
+        toast.error(error.response?.data?.detail || `Failed to impersonate ${targetUser.full_name}.`);
+    }
+  };
+
+  return (
+    <div className="flex-1 section-padding">
+      <div className="container-modern">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2 h-12">
+            <TabsTrigger value="users"><Users className="w-4 h-4 mr-2" />مدیریت کاربران</TabsTrigger>
+            <TabsTrigger value="roles"><Shield className="w-4 h-4 mr-2" />مدیریت نقش‌ها</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="users">
+            <Card className="card-modern">
+              <CardHeader className="border-b"><div className="flex justify-between items-center"><CardTitle>کاربران سیستم</CardTitle><Button><UserPlus className="w-4 h-4 ml-2" />افزودن کاربر</Button></div></CardHeader>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                    <Table><TableHeader><TableRow><TableHead>نام کامل</TableHead><TableHead>ایمیل</TableHead><TableHead>نقش‌ها</TableHead><TableHead>وضعیت</TableHead><TableHead className="text-right">عملیات</TableHead></TableRow></TableHeader>
+                        <TableBody>
+                            {isLoading ? <TableRow><TableCell colSpan={5} className="text-center py-8">Loading...</TableCell></TableRow>
+                            : users.map(u => (
+                                <TableRow key={u.id}>
+                                    <TableCell>{u.full_name}</TableCell><TableCell>{u.email}</TableCell>
+                                    <TableCell><div className="flex gap-1">{u.roles.map(roleId => <Badge key={roleId} variant="secondary">{roles.find(r => r.id === roleId)?.name}</Badge>)}</div></TableCell>
+                                    <TableCell><Badge variant={u.is_active ? "default" : "destructive"}>{u.is_active ? 'فعال' : 'غیرفعال'}</Badge></TableCell>
+                                    <TableCell className="text-right">
+                                        <Button variant="ghost" size="sm" onClick={() => openEditModal(u)}><Edit className="w-4 h-4" /></Button>
+                                        <Button variant="ghost" size="sm" onClick={() => handleImpersonate(u)} disabled={u.id === user?.id || u.is_superuser}><LogIn className="w-4 h-4" /></Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      <Dialog open={showEditUserModal} onOpenChange={setShowEditUserModal}>
+        <DialogContent dir="rtl">
+            <DialogHeader><DialogTitle>ویرایش کاربر: {editingUser?.full_name}</DialogTitle></DialogHeader>
+            <div className="py-4 space-y-6">
+                <div>
+                    <Label>نقش‌ها</Label>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                        {roles.map(role => (
+                            <div key={role.id} className="flex items-center space-x-2 space-x-reverse">
+                                <input type="checkbox" id={`role-${role.id}`} checked={editingUser?.roles.includes(role.id)} onChange={() => handleUserUpdateField('roles', role.id)} />
+                                <label htmlFor={`role-${role.id}`}>{role.name}</label>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                <div>
+                    <Label>وضعیت</Label>
+                    <div className="flex items-center space-x-2 space-x-reverse mt-2">
+                        <input type="checkbox" id="user-active" checked={!!editingUser?.is_active} onChange={(e) => handleUserUpdateField('is_active', e.target.checked)} />
+                        <label htmlFor="user-active">کاربر فعال است</label>
+                    </div>
+                </div>
+            </div>
+            <DialogFooter>
+                <Button variant="outline" onClick={() => setShowEditUserModal(false)}>انصراف</Button>
+                <Button onClick={handleUpdateUser}><Save className="w-4 h-4 ml-2" />ذخیره تغییرات</Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

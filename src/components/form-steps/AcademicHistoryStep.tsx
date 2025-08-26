@@ -1,0 +1,65 @@
+import React, { useState, useEffect } from 'react'; // Add useEffect
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Button } from '../ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import { GraduationCap, Plus, Trash2, Upload } from 'lucide-react';
+import { FormStepProps, AcademicRecord } from '../types/form-types';
+import { DEGREE_OPTIONS, COUNTRY_OPTIONS } from '../constants/form-constants';
+
+export function AcademicHistoryStep({ formData, onInputChange }: Omit<FormStepProps, 'onFileUpload'>) {
+  const [academicRecords, setAcademicRecords] = useState<AcademicRecord[]>(formData.academicRecords || []);
+  const [newRecord, setNewRecord] = useState<Partial<AcademicRecord>>({ degree: '', country: '', university: '', field: '', gpa: '', documentFile: null });
+
+    useEffect(() => {
+    setAcademicRecords(formData.academicRecords || []);
+  }, [formData.academicRecords]);
+  
+  const handleAddRecord = () => {
+    if (newRecord.degree && newRecord.country && newRecord.university && newRecord.field && newRecord.gpa) {
+      const record: AcademicRecord = { id: Date.now().toString(), ...newRecord } as AcademicRecord;
+      const updatedRecords = [...academicRecords, record];
+      setAcademicRecords(updatedRecords);
+      onInputChange('academicRecords', updatedRecords);
+      setNewRecord({ degree: '', country: '', university: '', field: '', gpa: '', documentFile: null });
+    }
+  };
+
+  const handleRemoveRecord = (recordId: string) => {
+    const updatedRecords = academicRecords.filter(record => record.id !== recordId);
+    setAcademicRecords(updatedRecords);
+    onInputChange('academicRecords', updatedRecords);
+  };
+  
+  return (
+    <Card className="card-modern" dir="ltr">
+      <CardHeader><CardTitle className="flex items-center space-x-2"><GraduationCap className="w-5 h-5 text-primary" /><span>Academic History</span></CardTitle></CardHeader>
+      <CardContent className="space-y-6">
+        <div className="border rounded-lg overflow-hidden"><Table><TableHeader><TableRow><TableHead>Degree</TableHead><TableHead>Country</TableHead><TableHead>University</TableHead><TableHead>Field of Study</TableHead><TableHead>GPA</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader><TableBody>
+          {academicRecords.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No academic records added yet.</TableCell></TableRow> : academicRecords.map(record => (
+            <TableRow key={record.id}>
+              <TableCell>{DEGREE_OPTIONS.find(d => d.value === record.degree)?.label}</TableCell>
+              <TableCell>{COUNTRY_OPTIONS.find(c => c.value === record.country)?.label}</TableCell>
+              <TableCell>{record.university}</TableCell><TableCell>{record.field}</TableCell><TableCell>{record.gpa}</TableCell>
+              <TableCell><Button type="button" variant="ghost" size="sm" onClick={() => handleRemoveRecord(record.id)} className="text-destructive"><Trash2 className="w-4 h-4" /></Button></TableCell>
+            </TableRow>
+          ))}
+        </TableBody></Table></div>
+        
+        <div className="space-y-4 bg-muted/20 p-4 rounded-lg">
+          <h4 className="font-medium text-primary">Add New Academic Record</h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Select value={newRecord.degree} onValueChange={v => setNewRecord(p => ({...p, degree: v}))}><SelectTrigger><SelectValue placeholder="Degree *" /></SelectTrigger><SelectContent>{DEGREE_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent></Select>
+            <Select value={newRecord.country} onValueChange={(v) => setNewRecord(p => ({...p, country: v}))}><SelectTrigger><SelectValue placeholder="Country *" /></SelectTrigger><SelectContent>{COUNTRY_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent></Select>
+            <Input value={newRecord.university} onChange={e => setNewRecord(p=>({...p, university: e.target.value}))} placeholder="University Name *" />
+            <Input value={newRecord.field} onChange={e => setNewRecord(p=>({...p, field: e.target.value}))} placeholder="Field of Study *" />
+            <Input value={newRecord.gpa} onChange={e => setNewRecord(p=>({...p, gpa: e.target.value}))} placeholder="GPA *" />
+          </div>
+          <div className="flex justify-end"><Button type="button" onClick={handleAddRecord} disabled={!newRecord.degree || !newRecord.country || !newRecord.university || !newRecord.field || !newRecord.gpa}><Plus className="w-4 h-4 mr-2" />Add Record</Button></div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
