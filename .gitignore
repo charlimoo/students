@@ -8,3 +8,4 @@ staticfiles/
 media/
 # end of backend/.dockerignore
 node_modules/
+package-lock.json
