@@ -1,36 +1,36 @@
-# Stage 1: Build the React application
-# Use a specific Node.js version for consistency
-FROM node:18 AS build
 
-# Set the working directory inside the container
+# ---- Build Stage ----
+# Use a specific Node LTS version on Alpine for smaller size
+FROM node:20-alpine as build-stage
+
 WORKDIR /app
 
-# Copy package.json and package-lock.json first to leverage Docker cache
-COPY package.json ./
-COPY package-lock.json ./
-
-# Install dependencies using 'npm ci' for faster, reliable builds
+# Copy package.json and package-lock.json (or yarn.lock)
+COPY ./package*.json ./
+# Use npm ci for faster, deterministic installs based on lock file
 RUN npm ci
 
-# Copy the rest of your application's source code
+# Copy the rest of the frontend source code
 COPY . .
 
-# Build the application
+# Build the React application
 RUN npm run build
 
-# Stage 2: Serve the application using Nginx
-# Use a lightweight Nginx image
-FROM nginx:stable-alpine
+# ---- Production Stage ----
+# Use a stable Nginx Alpine image for minimal size
+FROM nginx:stable-alpine as production-stage
 
-# Copy the built files from the 'build' stage
-# This uses the correct 'build' directory from your vite.config.js
-COPY --from=build /app/build /usr/share/nginx/html
+# Remove the default Nginx configuration file
+RUN rm /etc/nginx/conf.d/default.conf
 
-# Copy your custom Nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy custom Nginx configuration from the build context
+COPY ./nginx.conf /etc/nginx/conf.d/default.conf
 
-# Expose port 80
+# Copy the built static assets from the build stage to Nginx's web root
+COPY --from=build-stage /app/frontend/dist /usr/share/nginx/html
+
+# Expose port 80 (standard HTTP)
 EXPOSE 80
 
-# The default command to start Nginx
+# Command to run Nginx in the foreground
 CMD ["nginx", "-g", "daemon off;"]
