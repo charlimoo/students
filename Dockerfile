@@ -8,7 +8,7 @@ WORKDIR /app
 # Copy package.json and package-lock.json (or yarn.lock)
 COPY package.json package-lock.json ./
 # Use npm ci for faster, deterministic installs based on lock file
-RUN npm ci
+RUN npm i
 
 # Copy the rest of the frontend source code
 COPY . .
