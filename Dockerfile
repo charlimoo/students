@@ -2,19 +2,23 @@
 # Stage 1: Build the React application
 FROM node:18-alpine as build
 
+# Set an argument for the API URL that can be passed during the build
+ARG VITE_API_URL
+
+# Set the environment variable inside the build stage
+ENV VITE_API_URL=${VITE_API_URL}
+
 WORKDIR /app
 
-# Copy package.json and package-lock.json
+# Copy package files and install dependencies
 COPY package.json ./
 COPY package-lock.json ./
-
-# Install dependencies
 RUN npm install
 
 # Copy the rest of the application source code
 COPY . .
 
-# Build the application
+# Build the application using the environment variable
 RUN npm run build
 
 # Stage 2: Serve the application using Nginx
@@ -23,7 +27,7 @@ FROM nginx:stable-alpine
 # Copy the built files from the build stage
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Copy the Nginx configuration file
+# Copy the custom Nginx configuration file
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Expose port 80 for Nginx
