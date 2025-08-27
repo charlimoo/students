@@ -1,0 +1,81 @@
+// start of components/AlertManagement.tsx
+import React, { useState } from 'react';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Checkbox } from './ui/checkbox';
+import { toast } from 'sonner';
+import { AlertTriangle, Plus, Edit, Trash2, Power, Mail, LayoutDashboard, Save, Search, Filter } from 'lucide-react';
+import { Badge } from './ui/badge';
+interface AlertManagementProps {
+  onNavigate: (page: string) => void;
+}
+
+const mockAlertRules = [
+  { id: '1', name: 'پرونده‌های معطل در مرحله استعلام پلیس', conditions: { applicationType: 'تمدید ویزا دانشجویی', status: 'در حال بررسی', daysPassed: 7 }, actions: { showInDashboard: true, sendEmail: true, emailAddress: 'admin@university.ir' }, isActive: true, lastTriggered: '۱۴۰۳/۰۸/۱۵', triggeredCount: 12 },
+  { id: '2', name: 'درخواست‌های جدید ویزای تحصیلی', conditions: { applicationType: 'ویزای تحصیلی جدید', status: 'جدید', daysPassed: 3 }, actions: { showInDashboard: true, sendEmail: false, emailAddress: '' }, isActive: true, lastTriggered: '۱۴۰۳/۰۸/۱۴', triggeredCount: 8 },
+  { id: '3', name: 'پرونده‌های رد شده بدون پیگیری', conditions: { applicationType: 'همه انواع', status: 'رد شده', daysPassed: 14 }, actions: { showInDashboard: false, sendEmail: true, emailAddress: 'supervisor@university.ir' }, isActive: false, lastTriggered: '۱۴۰۳/۰۸/۱۰', triggeredCount: 3 }
+];
+const applicationTypes = [ { value: 'all', label: 'همه انواع' }, { value: 'new-admission', label: 'ویزای تحصیلی جدید' }];
+const statusOptions = [ { value: 'new', label: 'جدید' }, { value: 'in-review', label: 'در حال بررسی' }];
+
+export function AlertManagement({ onNavigate }: AlertManagementProps) {
+  const [alertRules, setAlertRules] = useState(mockAlertRules);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [newRule, setNewRule] = useState({ name: '', applicationType: '', status: '', daysPassed: '', showInDashboard: false, sendEmail: false, emailAddress: '' });
+
+  const handleSaveRule = async () => { /* ... save logic ... */ };
+  const handleToggleRule = async (ruleId: string) => { /* ... toggle logic ... */ };
+  const handleDeleteRule = async (ruleId: string) => { /* ... delete logic ... */ };
+  const filteredRules = alertRules.filter(rule => rule.name.includes(searchQuery));
+  const getStatusBadge = (isActive: boolean) => isActive ? <Badge className="bg-success text-success-foreground">فعال</Badge> : <Badge variant="secondary">غیرفعال</Badge>;
+
+  return (
+    <div className="flex-1 section-padding">
+      <div className="container-modern space-y-8">
+        <Card className="card-modern">
+          <CardHeader className="border-b">
+            <div className="flex justify-between items-center">
+              <CardTitle>قوانین هشدار فعال</CardTitle>
+              <div className="flex items-center space-x-3 space-x-reverse">
+                <div className="relative"><Search className="absolute right-3 top-1/2 -translate-y-1/2" /><Input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="جستجو..." className="pr-10" /></div>
+                <Button variant="outline"><Filter className="w-4 h-4 ml-2" />فیلتر</Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="border rounded-lg overflow-hidden"><table className="w-full">{/* ... Rules Table ... */}</table></div>
+          </CardContent>
+        </Card>
+
+        <Card className="card-modern">
+          <CardHeader className="border-b"><CardTitle>ایجاد/ویرایش قانون جدید</CardTitle></CardHeader>
+          <CardContent className="p-6">
+            <div className="space-y-6">
+              <div className="space-y-2"><Label>نام قانون</Label><Input value={newRule.name} onChange={e => setNewRule(p => ({ ...p, name: e.target.value }))} placeholder="مثال: پرونده‌های معطل..." /></div>
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">شرایط</h3>
+                <div className="bg-muted/20 p-4 rounded-lg border space-y-4">
+                  <div className="flex items-center gap-4"><span>اگر نوع درخواست برابر بود با</span><Select value={newRule.applicationType} onValueChange={v => setNewRule(p => ({...p, applicationType: v}))}><SelectTrigger className="w-48"><SelectValue /></SelectTrigger><SelectContent>{applicationTypes.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent></Select></div>
+                  <div className="flex items-center gap-4"><span>و وضعیت آن بود</span><Select value={newRule.status} onValueChange={v => setNewRule(p => ({...p, status: v}))}><SelectTrigger className="w-48"><SelectValue /></SelectTrigger><SelectContent>{statusOptions.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent></Select></div>
+                  <div className="flex items-center gap-4"><span>و مدت زمان سپری شده بیشتر از</span><Input type="number" value={newRule.daysPassed} onChange={e => setNewRule(p => ({...p, daysPassed: e.target.value}))} className="w-24" /><span>روز بود</span></div>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">اقدامات</h3>
+                <div className="bg-muted/20 p-4 rounded-lg border space-y-4">
+                  <div className="flex items-center space-x-3 space-x-reverse"><Checkbox id="d-alert" checked={newRule.showInDashboard} onCheckedChange={c => setNewRule(p => ({...p, showInDashboard:!!c}))} /><Label htmlFor="d-alert">نمایش در داشبورد</Label></div>
+                  <div className="space-y-3"><div className="flex items-center space-x-3 space-x-reverse"><Checkbox id="e-alert" checked={newRule.sendEmail} onCheckedChange={c => setNewRule(p => ({...p, sendEmail:!!c}))} /><Label htmlFor="e-alert">ارسال ایمیل به</Label></div>{newRule.sendEmail && <Input type="email" value={newRule.emailAddress} onChange={e => setNewRule(p => ({...p, emailAddress: e.target.value}))} className="mr-8" />}</div>
+                </div>
+              </div>
+              <div className="pt-4"><Button onClick={handleSaveRule}><Save className="w-4 h-4 ml-2" />ذخیره قانون</Button></div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+// end of components/AlertManagement.tsx

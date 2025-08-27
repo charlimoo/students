@@ -1,5 +1,6 @@
+// start of components/MyAllApplications.tsx
 // src/components/MyAllApplications.tsx
-import React, { useState, useMemo, useEffect } from 'react'; // Add useEffect
+import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -14,17 +15,17 @@ import {
   X,
   List,
   Grid3X3,
-  RefreshCw // Add RefreshCw
+  RefreshCw
 } from 'lucide-react';
-import apiService from '../api/apiService'; // Import apiService
-import { toast } from 'sonner'; // Import toast for error handling
+import apiService from '../api/apiService';
+import { toast } from 'sonner';
 
 interface MyAllApplicationsProps {
   onNavigate: (page: string) => void;
   onViewCase: (caseId: string) => void;
 }
 
-// --- FIX: NEW API TYPE DEFINITION ---
+// Type for API data
 interface ApiApplication {
   tracking_code: string;
   application_type: string;
@@ -50,19 +51,18 @@ const getStatusBadge = (status: string) => {
 const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('fa-IR', { year: 'numeric', month: 'long', day: 'numeric' });
 
 export function MyAllApplications({ onNavigate, onViewCase }: MyAllApplicationsProps) {
-  // --- FIX: STATE MANAGEMENT FOR API DATA ---
   const [applications, setApplications] = useState<ApiApplication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
 
   useEffect(() => {
-    const fetchAllApps = async () => {
+    const fetchUniversityApps = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await apiService.get('/v1/applications/staff-all/');
+        // --- FIX: Use the new, correctly scoped endpoint for university staff ---
+        const response = await apiService.get('/v1/applications/university-apps/');
         setApplications(response.data.results || response.data);
       } catch (err) {
         setError("Could not load applications. Please try again.");
@@ -71,10 +71,9 @@ export function MyAllApplications({ onNavigate, onViewCase }: MyAllApplicationsP
         setIsLoading(false);
       }
     };
-    fetchAllApps();
+    fetchUniversityApps();
   }, []);
 
-  // --- FIX: CALCULATE STATS FROM REAL DATA ---
   const totalApplications = applications.length;
   const approvedCount = applications.filter(app => app.status === 'APPROVED').length;
   const pendingCount = applications.filter(app => ['PENDING_REVIEW', 'PENDING_CORRECTION'].includes(app.status)).length;
@@ -128,3 +127,4 @@ export function MyAllApplications({ onNavigate, onViewCase }: MyAllApplicationsP
     </div>
   );
 }
+// end of components/MyAllApplications.tsx

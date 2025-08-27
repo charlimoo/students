@@ -1,3 +1,4 @@
+// start of components/NewAdmissionApplication.tsx
 // src/components/NewAdmissionApplication.tsx
 import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
@@ -19,6 +20,11 @@ interface NewAdmissionApplicationProps {
   applicationId: string | null;
 }
 
+interface ExistingDocument {
+  document_type: string;
+  file: string;
+}
+
 export function NewAdmissionApplication({ onBackToDashboard, onNavigate, applicationId }: NewAdmissionApplicationProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<AdmissionFormData>(INITIAL_FORM_DATA);
@@ -26,7 +32,14 @@ export function NewAdmissionApplication({ onBackToDashboard, onNavigate, applica
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   
+  const [existingDocuments, setExistingDocuments] = useState<ExistingDocument[]>([]);
+  
   const isEditMode = !!applicationId;
+
+  const steps = isEditMode
+    ? PROGRESS_STEPS.filter(step => step.id !== 3) // Exclude University step
+    : PROGRESS_STEPS;
+  const totalSteps = steps.length;
 
   useEffect(() => {
     const fetchApplicationData = async () => {
@@ -53,6 +66,7 @@ export function NewAdmissionApplication({ onBackToDashboard, onNavigate, applica
             })),
             documentUploads: [],
           });
+          setExistingDocuments(data.documents || []);
         } catch (error) {
           toast.error("Failed to load application data for editing.");
           onBackToDashboard();
@@ -60,7 +74,6 @@ export function NewAdmissionApplication({ onBackToDashboard, onNavigate, applica
       }
       setIsLoadingData(false);
     };
-
     fetchApplicationData();
   }, [applicationId, isEditMode, onBackToDashboard]);
 
@@ -75,9 +88,7 @@ export function NewAdmissionApplication({ onBackToDashboard, onNavigate, applica
         e.preventDefault();
         setIsSubmitting(true);
         setValidationErrors({});
-
         const payload = new FormData();
-        // Append simple fields (unchanged)
         payload.append('full_name', formData.fullName);
         payload.append('father_name', formData.fatherName);
         payload.append('date_of_birth', formData.birthDate);
@@ -86,13 +97,8 @@ export function NewAdmissionApplication({ onBackToDashboard, onNavigate, applica
         if (formData.grandfatherName) {
             payload.append('grandfather_name', formData.grandfatherName);
         }
-
-        // --- FIX STARTS HERE ---
-
-        // Append nested academic history records WITH their ID for updates
         formData.academicRecords.forEach((record, index) => {
-            // Check if the ID is a number (from DB) vs a string (newly created client-side)
-            if (record.id && !isNaN(Number(record.id))) {
+            if (isEditMode && record.id && !isNaN(Number(record.id))) {
               payload.append(`academic_histories[${index}]id`, record.id);
             }
             payload.append(`academic_histories[${index}]degree_level`, record.degree);
@@ -101,89 +107,81 @@ export function NewAdmissionApplication({ onBackToDashboard, onNavigate, applica
             payload.append(`academic_histories[${index}]field_of_study`, record.field);
             payload.append(`academic_histories[${index}]gpa`, record.gpa);
         });
-
-        // Append nested university choices WITH their ID for updates
         formData.universityPrograms.forEach((choice, index) => {
-            if (choice.id && !isNaN(Number(choice.id))) {
+            if (isEditMode && choice.id && !isNaN(Number(choice.id))) {
               payload.append(`university_choices[${index}]id`, choice.id);
             }
             if (choice.universityId) payload.append(`university_choices[${index}]university_id`, String(choice.universityId));
             if (choice.fieldId) payload.append(`university_choices[${index}]program_id`, String(choice.fieldId));
             payload.append(`university_choices[${index}]priority`, String(choice.priority));
         });
-
-        // --- FIX ENDS HERE ---
-
         formData.documentUploads.forEach((doc, index) => {
             if (doc.file && doc.documentType) {
                 payload.append(`documents[${index}]document_type`, doc.documentType);
                 payload.append(`documents[${index}]file`, doc.file);
             }
         });
-
         try {
-      let response;
-      if (isEditMode) {
-        response = await apiService.patch(`/v1/applications/${applicationId}/`, payload, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
-        toast.success("Application Resubmitted Successfully!");
-      } else {
-        payload.append('application_type', 'NEW_ADMISSION');
-        response = await apiService.post('/v1/applications/', payload, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
-        toast.success("Application Submitted Successfully!");
-      }
-      
-      const trackingCode = response.data.tracking_code;
-      setTimeout(() => onNavigate('application-status', trackingCode), 1500);
+            let response;
+            if (isEditMode) {
+                response = await apiService.patch(`/v1/applications/${applicationId}/`, payload, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+                });
+                toast.success("Application Resubmitted Successfully!");
+            } else {
+                payload.append('application_type', 'NEW_ADMISSION');
+                response = await apiService.post('/v1/applications/', payload, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+                });
+                toast.success("Application Submitted Successfully!");
+            }
+            const trackingCode = response.data.tracking_code;
+            setTimeout(() => onNavigate('application-status', trackingCode), 1500);
         } catch (error: any) {
-            // --- FIX STARTS HERE: IMPROVED ERROR HANDLING ---
             if (error.response && error.response.status === 400) {
                 const apiErrors = error.response.data;
                 const flatErrors: Record<string, string> = {};
-                
                 let detailedErrorDescription = "Please correct the following issues: ";
-                
                 Object.keys(apiErrors).forEach(key => {
-                    // Flatten the error message array/string
                     const errorMsg = Array.isArray(apiErrors[key]) ? apiErrors[key].join(' ') : String(apiErrors[key]);
                     flatErrors[key] = errorMsg;
-                    // Prettify the key name and add it to the description
                     const prettyKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                     detailedErrorDescription += `\n- ${prettyKey}: ${errorMsg}`;
                 });
-
                 setValidationErrors(flatErrors);
                 toast.error("Submission Failed", { 
                     description: <pre className="whitespace-pre-wrap text-xs">{detailedErrorDescription}</pre>,
-                    duration: 10000, // Give user time to read
+                    duration: 10000,
                 });
             } else {
                 toast.error("An unexpected error occurred", {
-                  description: "Please try again later or contact support."
+                    description: "Please try again later or contact support."
                 });
             }
-            // --- FIX ENDS HERE ---
         } finally {
             setIsSubmitting(false);
         }
     };
 
   const renderStepContent = () => {
+    // --- FIX: Correctly pass handleInputChange as the onInputChange prop ---
     const stepProps = { formData, onInputChange: handleInputChange, validationErrors };
-    switch (currentStep) {
-      case 1: return <PersonalInfoStep {...stepProps} />;
-      case 2: return <AcademicHistoryStep {...stepProps} />;
-      case 3: return <UniversityProgramStep {...stepProps} />;
-      case 4: return <DocumentUploadStep {...stepProps} />;
-      case 5: return <ReviewStep {...stepProps} />;
-      default: return null;
+    
+    let stepComponent;
+    const stepId = steps[currentStep - 1].id;
+
+    switch (stepId) {
+      case 1: stepComponent = <PersonalInfoStep {...stepProps} />; break;
+      case 2: stepComponent = <AcademicHistoryStep {...stepProps} />; break;
+      case 3: stepComponent = <UniversityProgramStep {...stepProps} />; break;
+      case 4: stepComponent = <DocumentUploadStep {...stepProps} existingDocuments={existingDocuments} />; break;
+      case 5: stepComponent = <ReviewStep {...stepProps} />; break;
+      default: stepComponent = null;
     }
+    return stepComponent;
   };
   
-  const currentProgress = (currentStep / 5) * 100;
+  const currentProgress = (currentStep / totalSteps) * 100;
 
   if (isLoadingData) {
       return <div className="flex h-screen w-full items-center justify-center"><RefreshCw className="w-8 h-8 animate-spin" /></div>;
@@ -193,38 +191,27 @@ export function NewAdmissionApplication({ onBackToDashboard, onNavigate, applica
     <div className="flex-1 overflow-auto">
         <div className="max-w-6xl mx-auto px-6 py-8">
             <div className="text-left mb-6">
-                <h1 className="text-3xl font-bold text-foreground">
-                  {isEditMode ? 'Edit & Resubmit Application' : 'New Admission Application'}
-                </h1>
-                <p className="text-muted-foreground mt-1">
-                  {isEditMode ? 'Please review and correct the information below before resubmitting.' : 'Please complete all sections of the form accurately.'}
-                </p>
+                <h1 className="text-3xl font-bold text-foreground">{isEditMode ? 'Edit & Resubmit Application' : 'New Admission Application'}</h1>
+                <p className="text-muted-foreground mt-1">{isEditMode ? 'Please review and correct the information below.' : 'Please complete all sections of the form accurately.'}</p>
             </div>
             
             <div className="mb-8 p-4 bg-card border rounded-lg">
                 <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium">Step {currentStep} of 5: {PROGRESS_STEPS[currentStep-1].label}</span>
+                    <span className="text-sm font-medium">Step {currentStep} of {totalSteps}: {steps[currentStep-1].label}</span>
                     <span className="text-sm text-muted-foreground">{Math.round(currentProgress)}% Complete</span>
                 </div>
                 <Progress value={currentProgress} className="h-2" />
             </div>
 
-            {/* --- FIX: RENDER FORM ONLY WHEN NOT LOADING --- */}
             <form onSubmit={handleSubmit} className="space-y-8">
                 {renderStepContent()}
-                
                 <div className="flex flex-col sm:flex-row gap-4 justify-between pt-6 border-t mt-8">
-                    <div>
-                      <Button type="button" variant="outline" onClick={() => setCurrentStep(prev => prev - 1)} disabled={currentStep === 1}>Previous Step</Button>
-                    </div>
+                    <div><Button type="button" variant="outline" onClick={() => setCurrentStep(prev => prev - 1)} disabled={currentStep === 1}>Previous Step</Button></div>
                     <div className="flex gap-4">
-                        {currentStep < 5 ? (
+                        {currentStep < totalSteps ? (
                             <Button type="button" onClick={() => setCurrentStep(prev => prev + 1)}>Next Step</Button>
                         ) : (
-                                <Button type="submit" disabled={isSubmitting || !formData.confirmSubmission}>
-                                    {isSubmitting ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : null}
-                                    {isSubmitting ? 'Submitting...' : (isEditMode ? 'Resubmit Application' : 'Submit Application')}
-                                </Button>
+                            <Button type="submit" disabled={isSubmitting || !formData.confirmSubmission}>{isSubmitting ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : null}{isSubmitting ? 'Submitting...' : (isEditMode ? 'Resubmit Application' : 'Submit Application')}</Button>
                         )}
                     </div>
                 </div>
@@ -233,3 +220,4 @@ export function NewAdmissionApplication({ onBackToDashboard, onNavigate, applica
     </div>
   );
 }
+// end of components/NewAdmissionApplication.tsx

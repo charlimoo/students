@@ -33,16 +33,6 @@ export function StudentHeader({ pageTitle, onToggleSidebar, onNewApplication, on
           </div>
           
           <div className="flex items-center space-x-2 md:space-x-4">
-            <div className="relative hidden lg:block">
-              {/* FIX: Search icon is now on the left for LTR layout */}
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              {/* FIX: Padding is now on the left (pl-10) */}
-              <input
-                type="text"
-                placeholder="Search applications..."
-                className="input-modern pl-10 w-48 xl:w-64 text-sm"
-              />
-            </div>
 
             <Button onClick={onNewApplication} size="sm">
               <Plus className="w-4 h-4 mr-2" />

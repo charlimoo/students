@@ -1,3 +1,4 @@
+// start of components/StaffSidebar.tsx
 import React from 'react';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback } from './ui/avatar';
@@ -21,7 +22,7 @@ interface StaffSidebarProps {
   onClose: () => void;
   mainTitle: string;
   subTitle: string;
-  onLogout: () => void;
+  onLogout: () => void; // --- FIX: This prop is now correctly defined
 }
 
 export function StaffSidebar({ items, isOpen, onNavigate, onClose, subTitle, mainTitle, onLogout }: StaffSidebarProps) {
@@ -32,7 +33,7 @@ export function StaffSidebar({ items, isOpen, onNavigate, onClose, subTitle, mai
   
   return (
     <div className={`fixed inset-y-0 right-0 z-50 w-72 bg-sidebar border-l border-sidebar-border transform ${isOpen ? 'translate-x-0' : 'translate-x-full'} transition-transform duration-300 ease-in-out md:relative md:translate-x-0 md:flex md:flex-col sidebar-modern`}>
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col h-full w-full">
         {/* Mobile Header with Close Button */}
         <div className="flex items-center justify-between p-4 md:hidden">
           <Button variant="ghost" size="sm" onClick={onClose} className="p-1">
@@ -87,11 +88,12 @@ export function StaffSidebar({ items, isOpen, onNavigate, onClose, subTitle, mai
                           <p className="text-xs text-primary/80 truncate">کارشناس ارشد</p>
                       </div>
                   </div>
+                  {/* --- FIX: ADDED onClick HANDLER TO THE LOGOUT BUTTON --- */}
                   <Button 
                     variant="ghost" 
                     size="sm" 
                     className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                    onClick={() => onNavigate('login')}
+                    onClick={onLogout} // This line fixes the bug
                     title="خروج از حساب"
                   >
                       <LogOut className="w-5 h-5" />
@@ -103,3 +105,4 @@ export function StaffSidebar({ items, isOpen, onNavigate, onClose, subTitle, mai
     </div>
   );
 }
+// end of components/StaffSidebar.tsx

@@ -104,7 +104,7 @@ export function MyApplications({ onBack, onViewApplication, initialFilter }: MyA
 
       <Card className="card-modern">
         <CardHeader><CardTitle>My Applications ({filteredApplications.length})</CardTitle></CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="px-8">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader><TableRow><TableHead>Type</TableHead><TableHead>Tracking ID</TableHead><TableHead>Submission</TableHead><TableHead>Last Update</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>

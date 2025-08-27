@@ -1,3 +1,4 @@
+// start of components/AppShell.tsx
 // src/components/AppShell.tsx
 import React, { useState } from 'react';
 import { StudentSidebar } from './StudentSidebar';
@@ -38,13 +39,13 @@ export function AppShell({ role, pageTitle, sidebarItems, children, onNavigate, 
           onNavigate={onNavigate} 
           isOpen={isSidebarOpen} 
           onClose={closeSidebar} 
-          onLogout={onLogout}
+          onLogout={onLogout} // Correctly passed here
           mainTitle={role === 'institution' ? "پنل موسسه" : "پنل کارشناسان"}
           subTitle="پورتال جامع دانشجویی"
         />
       );
     }
-    // StudentSidebar has a simpler prop structure
+    // StudentSidebar has a simpler prop structure and a different logout button location
     return (
       <StudentSidebar 
         items={sidebarItems} 
@@ -100,3 +101,4 @@ export function AppShell({ role, pageTitle, sidebarItems, children, onNavigate, 
     </div>
   );
 }
+// end of components/AppShell.tsx

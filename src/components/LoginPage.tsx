@@ -181,14 +181,8 @@ export function LoginPage({ onNavigate, onSignUp, onInstitutionSignUp, onStaffSi
             <p className="text-muted-foreground text-center max-w-sm mx-auto persian-body">{t.pageSubtitle}</p>
           </div>
           <Card className="card-modern shadow-xl border-white/50 backdrop-blur-sm">
-            <CardHeader className="pb-6">
-              <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as UserRole)} className="w-full">
-                <TabsList className="grid w-full grid-cols-3 h-12 bg-muted/50 rounded-xl p-1">
-                  <TabsTrigger value="student" className="flex items-center space-x-2 space-x-reverse text-xs font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm persian-text">{getTabIcon('student')}<span>{t.student}</span></TabsTrigger>
-                  <TabsTrigger value="institution" className="flex items-center space-x-2 space-x-reverse text-xs font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm persian-text">{getTabIcon('institution')}<span>{t.institution}</span></TabsTrigger>
-                  <TabsTrigger value="staff" className="flex items-center space-x-2 space-x-reverse text-xs font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm persian-text">{getTabIcon('staff')}<span>{t.staff}</span></TabsTrigger>
-                </TabsList>
-              </Tabs>
+            <CardHeader className="p-0 m-0">
+
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">

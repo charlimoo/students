@@ -187,8 +187,8 @@ export function Dashboard({ onNavigate, onViewApplication }: DashboardProps) {
               <Button variant="outline" size="sm" onClick={() => onNavigate('my-applications')}>View All</Button>
             </div>
           </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
+          <CardContent className="px-10">
+            <div className="overflow-x-auto px-4">
                 <Table>
                 <TableHeader><TableRow><TableHead>Application Type</TableHead><TableHead>Submission Date</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
                 <TableBody>

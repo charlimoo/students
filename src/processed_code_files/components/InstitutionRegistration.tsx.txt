@@ -1,0 +1,220 @@
+// start of components/InstitutionRegistration.tsx
+// start of frontend/src/components/InstitutionRegistration.tsx
+import React, { useState } from 'react';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+import { toast } from 'sonner';
+import { 
+  Building2, 
+  ArrowLeft,
+  User,
+  Mail,
+  Lock,
+  Globe,
+  FileText,
+  Upload,
+  Eye,
+  EyeOff,
+  CheckCircle,
+  Hash,
+  Phone,
+  RefreshCw
+} from 'lucide-react';
+import apiService from '../api/apiService';
+
+interface InstitutionRegistrationProps {
+  onBack: () => void;
+  onSubmit: () => void; // This will navigate to login page on success
+}
+
+const countryOptions = [
+  'Afghanistan', 'Australia', 'Austria', 'Azerbaijan', 'Bangladesh', 'Belgium',
+  'Brazil', 'Canada', 'China', 'Egypt', 'France', 'Germany', 'India', 'Indonesia',
+  'Iran', 'Iraq', 'Italy', 'Japan', 'Jordan', 'Lebanon', 'Malaysia', 'Pakistan',
+  'Russia', 'Saudi Arabia', 'South Korea', 'Spain', 'Syria', 'Turkey',
+  'United Kingdom', 'United States', 'Other'
+];
+
+export function InstitutionRegistration({ onBack, onSubmit }: InstitutionRegistrationProps) {
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+
+  const [formData, setFormData] = useState({
+    institutionName: '',
+    registrationNumber: '',
+    address: '',
+    countryOfOperation: '',
+    contactPersonName: '',
+    contactPersonPhone: '',
+    contactEmail: '',
+    password: '',
+    confirmPassword: '',
+    registrationDocument: null as File | null,
+  });
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const handleInputChange = (field: keyof typeof formData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) setErrors(prev => ({ ...prev, [field]: '' }));
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        setErrors(prev => ({ ...prev, registrationDocument: 'File size must be less than 10MB' }));
+        return;
+      }
+      setFormData(prev => ({ ...prev, registrationDocument: file }));
+      if (errors.registrationDocument) setErrors(prev => ({ ...prev, registrationDocument: '' }));
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.institutionName.trim()) newErrors.institutionName = 'Institution name is required';
+    if (!formData.registrationNumber.trim()) newErrors.registrationNumber = 'Registration number is required';
+    if (!formData.address.trim()) newErrors.address = 'Address is required';
+    if (!formData.countryOfOperation) newErrors.countryOfOperation = 'Please select a country';
+    if (!formData.contactPersonName.trim()) newErrors.contactPersonName = 'Contact person name is required';
+    if (!formData.contactPersonPhone.trim()) newErrors.contactPersonPhone = 'Contact phone is required';
+    if (!formData.contactEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contactEmail)) newErrors.contactEmail = 'A valid email is required';
+    if (!formData.password || formData.password.length < 8) newErrors.password = 'Password must be at least 8 characters';
+    if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
+    if (!formData.registrationDocument) newErrors.registrationDocument = 'Registration document is required';
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+
+    setIsSubmitting(true);
+    const payload = new FormData();
+    payload.append('legal_name', formData.institutionName);
+    payload.append('address', formData.address);
+    payload.append('contact_person_name', formData.contactPersonName);
+    payload.append('contact_person_phone', formData.contactPersonPhone);
+    payload.append('email', formData.contactEmail);
+    payload.append('password', formData.password);
+    if (formData.registrationDocument) {
+        payload.append('registration_document', formData.registrationDocument);
+    }
+
+    try {
+      await apiService.post('/v1/auth/institution-register/', payload, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setShowSuccessDialog(true);
+    } catch (error: any) {
+      const apiErrors = error.response?.data;
+      if (apiErrors) {
+        let errorDesc = '';
+        for (const key in apiErrors) {
+            errorDesc += `${key}: ${apiErrors[key].join(' ')} `;
+        }
+        toast.error('Registration Failed', { description: errorDesc });
+      } else {
+        toast.error('An unexpected error occurred.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSuccessConfirm = () => {
+    setShowSuccessDialog(false);
+    onSubmit();
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-500/10">
+      <div className="flex items-center justify-center min-h-screen p-6">
+        <div className="w-full max-w-2xl">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg"><Building2 className="w-8 h-8 text-primary-foreground" /></div>
+            <h1 className="text-3xl font-bold text-foreground mb-3">Become a Registered Partner Institution</h1>
+            <p className="text-muted-foreground text-center max-w-md mx-auto">Join our network of trusted educational institutions</p>
+          </div>
+          <Card className="card-modern shadow-xl">
+            <CardHeader className="pb-6">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-xl">Institution Registration</CardTitle>
+                <Button variant="ghost" onClick={onBack} className="flex items-center space-x-2"><ArrowLeft className="w-4 h-4" /><span>Back to Login</span></Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-8">
+              {/* Institution Details Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2">Institution Details</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2"><Label htmlFor="institutionName">Institution Name</Label><Input id="institutionName" value={formData.institutionName} onChange={(e) => handleInputChange('institutionName', e.target.value)} className={errors.institutionName ? 'border-destructive' : ''} />{errors.institutionName && <p className="text-sm text-destructive">{errors.institutionName}</p>}</div>
+                    <div className="space-y-2"><Label htmlFor="registrationNumber">Registration Number</Label><Input id="registrationNumber" value={formData.registrationNumber} onChange={(e) => handleInputChange('registrationNumber', e.target.value)} className={errors.registrationNumber ? 'border-destructive' : ''} />{errors.registrationNumber && <p className="text-sm text-destructive">{errors.registrationNumber}</p>}</div>
+                    <div className="md:col-span-2 space-y-2"><Label htmlFor="address">Address</Label><Input id="address" value={formData.address} onChange={(e) => handleInputChange('address', e.target.value)} className={errors.address ? 'border-destructive' : ''} />{errors.address && <p className="text-sm text-destructive">{errors.address}</p>}</div>
+                    <div className="space-y-2"><Label htmlFor="countryOfOperation">Country of Operation</Label><Select value={formData.countryOfOperation} onValueChange={(v) => handleInputChange('countryOfOperation', v)}><SelectTrigger className={errors.countryOfOperation ? 'border-destructive' : ''}><SelectValue placeholder="Select country" /></SelectTrigger><SelectContent>{countryOptions.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select>{errors.countryOfOperation && <p className="text-sm text-destructive">{errors.countryOfOperation}</p>}</div>
+                </div>
+              </div>
+
+              {/* Contact Information Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2">Contact Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2"><Label htmlFor="contactPersonName">Contact Person</Label><Input id="contactPersonName" value={formData.contactPersonName} onChange={(e) => handleInputChange('contactPersonName', e.target.value)} className={errors.contactPersonName ? 'border-destructive' : ''} />{errors.contactPersonName && <p className="text-sm text-destructive">{errors.contactPersonName}</p>}</div>
+                    <div className="space-y-2"><Label htmlFor="contactPersonPhone">Contact Phone</Label><Input id="contactPersonPhone" value={formData.contactPersonPhone} onChange={(e) => handleInputChange('contactPersonPhone', e.target.value)} className={errors.contactPersonPhone ? 'border-destructive' : ''} />{errors.contactPersonPhone && <p className="text-sm text-destructive">{errors.contactPersonPhone}</p>}</div>
+                    <div className="md:col-span-2 space-y-2"><Label htmlFor="contactEmail">Login Email</Label><Input id="contactEmail" type="email" value={formData.contactEmail} onChange={(e) => handleInputChange('contactEmail', e.target.value)} className={errors.contactEmail ? 'border-destructive' : ''} />{errors.contactEmail && <p className="text-sm text-destructive">{errors.contactEmail}</p>}</div>
+                </div>
+              </div>
+
+              {/* Account Creation Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2">Account Creation</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2"><Label htmlFor="password">Password</Label><div className="relative"><Input id="password" type={showPassword ? 'text' : 'password'} value={formData.password} onChange={(e) => handleInputChange('password', e.target.value)} className={`pr-10 ${errors.password ? 'border-destructive' : ''}`} /><button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2">{showPassword ? <EyeOff/> : <Eye/>}</button></div>{errors.password && <p className="text-sm text-destructive">{errors.password}</p>}</div>
+                    <div className="space-y-2"><Label htmlFor="confirmPassword">Confirm Password</Label><Input id="confirmPassword" type="password" value={formData.confirmPassword} onChange={(e) => handleInputChange('confirmPassword', e.target.value)} className={errors.confirmPassword ? 'border-destructive' : ''} />{errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword}</p>}</div>
+                </div>
+              </div>
+
+              {/* Document Upload */}
+              <div className="space-y-2">
+                <Label htmlFor="document">Business Registration Document</Label>
+                <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${errors.registrationDocument ? 'border-destructive' : 'border-border hover:border-primary'}`}>
+                    <input id="document-upload-input" type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileUpload} className="hidden" />
+                    {formData.registrationDocument ? (
+                        <div className="space-y-2"><CheckCircle className="w-8 h-8 text-success mx-auto" /><p>{formData.registrationDocument.name}</p><Button variant="link" onClick={() => document.getElementById('document-upload-input')?.click()}>Change file</Button></div>
+                    ) : (
+                        <div className="space-y-2"><Upload className="w-8 h-8 text-muted-foreground mx-auto" /><Button variant="outline" onClick={() => document.getElementById('document-upload-input')?.click()}>Choose File</Button><p className="text-sm text-muted-foreground mt-2">PDF, JPG, PNG (Max 10MB)</p></div>
+                    )}
+                </div>
+                {errors.registrationDocument && <p className="text-sm text-destructive">{errors.registrationDocument}</p>}
+              </div>
+
+              <Button onClick={handleSubmit} disabled={isSubmitting} className="w-full button-primary h-12 text-base" size="lg">
+                {isSubmitting ? <RefreshCw className="w-5 h-5 animate-spin" /> : <CheckCircle className="w-5 h-5 mr-2" />}
+                {isSubmitting ? 'Submitting for Review...' : 'Submit for Verification'}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+      <AlertDialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="mx-auto w-16 h-16 bg-success rounded-full flex items-center justify-center mb-4"><CheckCircle className="w-8 h-8 text-white" /></div>
+            <AlertDialogTitle className="text-center">Application Submitted!</AlertDialogTitle>
+            <AlertDialogDescription className="text-center">Your application will be reviewed within 2-3 business days. You will be notified via email upon approval.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter><AlertDialogAction onClick={handleSuccessConfirm} className="w-full button-primary">Return to Login</AlertDialogAction></AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+// end of frontend/src/components/InstitutionRegistration.tsx
+// end of components/InstitutionRegistration.tsx

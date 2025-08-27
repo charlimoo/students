@@ -44,11 +44,12 @@ import { SystemSettings } from './components/SystemSettings';
 import { InstitutionDashboard } from './components/InstitutionDashboard';
 import { PersianNewApplicationFormByInstitution } from './components/PersianNewApplicationFormByInstitution';
 import { ApplicantDetailView } from './components/ApplicantDetailView';
+import { InstitutionStaffManagement } from './components/InstitutionStaffManagement'; // --- FIX: Import the new component ---
 
 // --- Icons for Sidebar Configurations ---
 import {
   LayoutDashboard, FileText, FolderOpen, User, HelpCircle, ClipboardList,
-  Search, BarChart3, Building2, Shield, Settings, AlertTriangle, Users as UsersIcon, Home
+  Search, BarChart3, Building2, Shield, Settings, AlertTriangle, Users as UsersIcon, Home, FilePlus
 } from 'lucide-react';
 
 // --- Sidebar Configurations ---
@@ -62,6 +63,7 @@ const studentSidebarItems = [
 const staffSidebarItems = [
   { id: 'staff-workbench', label: 'میزکار', icon: Home },
   { id: 'my-all-applications', label: 'همه درخواست‌ها', icon: ClipboardList },
+  { id: 'staff-new-application', label: 'ثبت درخواست جدید', icon: FilePlus },
   { id: 'case-search', label: 'جستجوی پرونده', icon: Search },
   { id: 'reports', label: 'گزارش‌ها', icon: BarChart3 },
   { id: 'staff-profile', label: 'پروفایل من', icon: User }
@@ -74,9 +76,11 @@ const adminSidebarItems = [
   { id: 'admin-alerts', label: 'مدیریت هشدارها', icon: AlertTriangle },
   { id: 'admin-settings', label: 'تنظیمات سیستمی', icon: Settings }
 ];
+// --- FIX: Add new item to institution sidebar config ---
 const institutionSidebarItems = [
     { id: 'institution-dashboard', label: 'داشبورد', icon: LayoutDashboard },
     { id: 'new-application-form', label: 'ثبت درخواست جدید', icon: FileText },
+    { id: 'institution-staff', label: 'مدیریت کارشناسان', icon: UsersIcon },
     { id: 'institution-reports', label: 'گزارش‌ها', icon: BarChart3 }, 
 ];
 
@@ -164,6 +168,7 @@ export default function App() {
             'case-detail': <NewAdmissionDetailView applicationId={selectedId || ''} onBack={() => navigate('staff-workbench')} backLabel="بازگشت به میزکار" />,
             'my-all-applications': <MyAllApplications onNavigate={navigate} onViewCase={(caseId) => navigate('case-detail-from-all', caseId)} />,
             'case-detail-from-all': <NewAdmissionDetailView applicationId={selectedId || ''} onBack={() => navigate('my-all-applications')} backLabel="بازگشت به همه درخواست‌ها" />,
+            'staff-new-application': <PersianNewApplicationFormByInstitution onBack={() => navigate('staff-workbench')} onSubmit={() => navigate('staff-workbench')} onSaveDraft={() => navigate('staff-workbench')} />,
             'case-search': <CaseSearch onNavigate={navigate} onViewCase={(caseId) => navigate('case-detail', caseId)} />,
             'reports': <Reports onNavigate={navigate} />,
             'staff-profile': <StaffProfile onNavigate={navigate} />,
@@ -193,6 +198,8 @@ export default function App() {
             'institution-dashboard': <InstitutionDashboard onNavigate={navigate} />,
             'new-application-form': <PersianNewApplicationFormByInstitution onBack={() => navigate('institution-dashboard')} onSubmit={() => navigate('institution-dashboard')} onSaveDraft={() => navigate('institution-dashboard')} />,
             'applicant-detail': <ApplicantDetailView applicantId={selectedId} onBack={() => navigate('institution-dashboard')} />,
+            // --- FIX: Add the new route for staff management ---
+            'institution-staff': <InstitutionStaffManagement />,
             'institution-reports': <Reports onNavigate={navigate} />,
         };
         const pageContent = institutionPages[currentPage] || institutionPages['institution-dashboard'];
@@ -210,3 +217,4 @@ export default function App() {
     </div>
   );
 }
+// end of App.tsx

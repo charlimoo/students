@@ -80,37 +80,7 @@ export function StudentSidebar({ items, isOpen, onNavigate, onClose }: StudentSi
           </nav>
         </div>
 
-        {/* FIX: Help Card and User Profile are now outside the scrollable area, effectively making them a sticky footer */}
-        <div className="mt-auto">
-          <div className="px-3 mt-4">
-            <Separator className="mb-4" />
-            <div className="bg-primary-50 rounded-lg p-3.5 mb-4">
-              <h3 className="font-medium text-primary mb-1.5 text-sm">Need Help?</h3>
-              <p className="text-xs text-primary/80 mb-3 leading-relaxed">
-                Our support team is available 24/7 to assist you.
-              </p>
-              <Button
-                size="sm"
-                onClick={() => handleNavigate('support-center')}
-                className="w-full bg-primary text-primary-foreground hover:bg-primary-600 text-xs py-2"
-              >
-                Contact Support
-              </Button>
-            </div>
-          </div>
-          
-          <div className="p-4 border-t border-sidebar-border">
-            <div className="flex items-center space-x-3">
-              <Avatar className="w-10 h-10">
-                <AvatarFallback className="bg-primary text-primary-foreground">A</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-sidebar-foreground truncate text-sm">Aylin Yılmaz</h3>
-                <p className="text-xs text-muted-foreground truncate">Computer Science</p>
-              </div>
-            </div>
-          </div>
-        </div>
+
       </div>
     </div>
   );

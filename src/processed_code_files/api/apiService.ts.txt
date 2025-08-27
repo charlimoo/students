@@ -1,0 +1,43 @@
+// start of api/apiService.ts
+// start of frontend/src/api/apiService.ts
+import axios from 'axios';
+
+const apiService = axios.create({
+  // baseURL: 'http://127.0.0.1:8000/api', // Your Django API base URL
+  baseURL: 'https://studentbak.nilva.ir/api', // Your Django API base URL
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+/**
+ * Request Interceptor
+ * This runs BEFORE each request is sent.
+ * Its purpose is to check for a JWT token in localStorage and add it to the request header.
+ */
+apiService.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      // Add the Authorization header to the request
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    // Handle request errors
+    return Promise.reject(error);
+  }
+);
+
+/**
+ * Response Interceptor (Optional but Recommended for Future)
+ * This could be used to handle token refreshing automatically.
+ * If a 401 Unauthorized response is received, it would attempt to use the
+ * refresh token to get a new access token and then retry the original request.
+ * For now, we will handle this logic in the AuthContext.
+ */
+
+export default apiService;
+// end of frontend/src/api/apiService.ts
+// end of api/apiService.ts

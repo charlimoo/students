@@ -1,3 +1,4 @@
+// start of components/form-steps/ReviewStep.tsx
 // src/components/form-steps/ReviewStep.tsx
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -14,18 +15,17 @@ export function ReviewStep({ formData, onInputChange }: Omit<FormStepProps, 'onF
     const hasPersonalInfo = formData.fullName && formData.fatherName && formData.birthDate && formData.nationality && formData.email;
     const hasAcademicRecords = formData.academicRecords && formData.academicRecords.length > 0 && formData.academicRecords.every(r => r.degree && r.university && r.field && r.gpa);
     const hasUniversityPrograms = formData.universityPrograms && formData.universityPrograms.length > 0 && formData.universityPrograms.every(p => p.university && p.field);
-    const hasRequiredDocuments = formData.documentUploads && formData.documentUploads.some(doc => doc.file && doc.documentType);
     
-    // In edit mode, we don't require new documents to be uploaded.
-    const isEditMode = true; // A simple way to simulate edit mode logic for this component.
-                             // A more robust solution might pass an isEditMode prop.
-    const documentsAreValid = hasRequiredDocuments || isEditMode;
+    // In edit mode, we don't require new documents. The application might already have them.
+    const isPotentiallyEditMode = formData.academicRecords.some(r => r.id && !isNaN(Number(r.id)));
+    const hasRequiredDocuments = formData.documentUploads && formData.documentUploads.some(doc => doc.file && doc.documentType);
+    const documentsAreValid = hasRequiredDocuments || isPotentiallyEditMode;
 
     return !!(hasPersonalInfo && hasAcademicRecords && hasUniversityPrograms && documentsAreValid);
   };
 
   const getMissingFields = () => {
-    const missing: string[] = []; // Corrected line
+    const missing: string[] = [];
     if (!formData.fullName || !formData.fatherName || !formData.birthDate || !formData.nationality || !formData.email) {
       missing.push('Personal information is incomplete');
     }
@@ -35,9 +35,9 @@ export function ReviewStep({ formData, onInputChange }: Omit<FormStepProps, 'onF
     if (!formData.universityPrograms || formData.universityPrograms.length === 0 || !formData.universityPrograms.every(p => p.university && p.field)) {
       missing.push('One or more university choices are incomplete');
     }
-    // Only check for documents if not in a simulated edit mode
-    const isEditMode = true;
-    if (!isEditMode && (!formData.documentUploads || !formData.documentUploads.some(doc => doc.file && doc.documentType))) {
+    
+    const isPotentiallyEditMode = formData.academicRecords.some(r => r.id && !isNaN(Number(r.id)));
+    if (!isPotentiallyEditMode && (!formData.documentUploads || !formData.documentUploads.some(doc => doc.file && doc.documentType))) {
       missing.push('At least one document must be uploaded with a type selected');
     }
     return missing;
@@ -101,8 +101,6 @@ export function ReviewStep({ formData, onInputChange }: Omit<FormStepProps, 'onF
         </div>
         
         <div className="pt-4 border-t">
-          {/* --- FIX STARTS HERE --- */}
-          {/* The onCheckedChange now correctly calls onInputChange for the 'confirmSubmission' field. */}
           <div className="flex items-start space-x-3">
             <Checkbox 
               id="confirm-submission" 
@@ -113,9 +111,9 @@ export function ReviewStep({ formData, onInputChange }: Omit<FormStepProps, 'onF
               I hereby confirm that all information provided is accurate and complete. I understand that any false statements may result in the rejection of my application.
             </Label>
           </div>
-          {/* --- FIX ENDS HERE --- */}
         </div>
       </CardContent>
     </Card>
   );
 }
+// end of components/form-steps/ReviewStep.tsx

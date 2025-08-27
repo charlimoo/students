@@ -1,0 +1,169 @@
+// start of components/PersianMyProfile.tsx
+// start of frontend/src/components/PersianMyProfile.tsx
+import React, { useState, useEffect } from 'react';
+import { Button } from './ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { ArrowRight, User, Shield, Bell, Save, Edit3, LogOut, Camera, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
+import { useAuth } from '../context/AuthContext';
+import apiService from '../api/apiService';
+
+interface PersianMyProfileProps {
+  onBack: () => void;
+  onLogOut: () => void;
+}
+
+// State types are the same as the English version
+interface ProfileData {
+  fullName: string;
+  email: string;
+  phone: string;
+  profilePicture: string | null;
+}
+interface PasswordForm {
+  old_password: string;
+  new_password: string;
+  new_password2: string;
+}
+
+export function PersianMyProfile({ onBack, onLogOut }: PersianMyProfileProps) {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('personal');
+  const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [profileData, setProfileData] = useState<ProfileData>({
+    fullName: '', email: '', phone: '', profilePicture: null
+  });
+  const [passwordForm, setPasswordForm] = useState<PasswordForm>({
+    old_password: '', new_password: '', new_password2: ''
+  });
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setIsLoading(true);
+      try {
+        const response = await apiService.get('/v1/me/profile/');
+        setProfileData({
+          fullName: response.data.full_name || '',
+          email: user?.email || '',
+          phone: response.data.phone_number || '',
+          profilePicture: response.data.profile_picture || null,
+        });
+      } catch (error) {
+        toast.error("خطا در بارگذاری اطلاعات پروفایل.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchProfile();
+  }, [user]);
+
+  const handleInputChange = (field: keyof ProfileData, value: string) => {
+    setProfileData(prev => ({ ...prev, [field]: value }));
+  };
+  
+  const handlePasswordChange = (field: keyof PasswordForm, value: string) => {
+    setPasswordForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      const payload = new FormData();
+      payload.append('full_name', profileData.fullName);
+      payload.append('phone_number', profileData.phone);
+      // File upload logic would be added here
+
+      await apiService.patch('/v1/me/profile/', payload, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      toast.success("پروفایل با موفقیت بروزرسانی شد!");
+      setIsEditing(false);
+    } catch (error) {
+      toast.error("بروزرسانی پروفایل ناموفق بود.");
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (passwordForm.new_password !== passwordForm.new_password2) {
+      toast.error("رمز عبور جدید و تکرار آن مطابقت ندارند.");
+      return;
+    }
+    try {
+      await apiService.put('/v1/me/profile/change-password/', passwordForm);
+      toast.success("رمز عبور با موفقیت تغییر کرد!");
+      setPasswordForm({ old_password: '', new_password: '', new_password2: '' });
+    } catch (error: any) {
+      toast.error("تغییر رمز عبور ناموفق بود", {
+        description: error.response?.data?.old_password?.[0] || "لطفا رمز عبور فعلی خود را بررسی کنید."
+      });
+    }
+  };
+
+  if (isLoading) {
+    return <div className="flex h-screen w-full items-center justify-center"><RefreshCw className="w-8 h-8 animate-spin" /></div>;
+  }
+
+  return (
+    <div className="min-h-screen bg-background persian-text" dir="rtl">
+      <div className="border-b bg-card">
+        <div className="max-w-6xl mx-auto px-6 py-6">
+          <button onClick={onBack} className="flex items-center space-x-2 space-x-reverse text-primary hover:underline mb-6"><ArrowRight className="w-4 h-4" /><span>بازگشت به داشبورد</span></button>
+          <div className="text-right"><h1 className="text-3xl text-foreground persian-heading">پروفایل کاربری</h1></div>
+        </div>
+      </div>
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <div className="lg:col-span-1">
+            <Card className="card-modern sticky top-6">
+              <CardContent className="p-6 text-center">
+                <div className="relative inline-block mb-6"><Avatar className="w-32 h-32 border-4"><AvatarImage src={profileData.profilePicture || undefined} /><AvatarFallback className="text-4xl">{profileData.fullName.charAt(0)}</AvatarFallback></Avatar>
+                  {isEditing && <label className="absolute bottom-0 left-0 bg-primary p-2 rounded-full cursor-pointer"><Camera className="w-4 h-4 text-primary-foreground" /><input type="file" className="hidden" /></label>}
+                </div>
+                <h3 className="text-xl font-bold">{profileData.fullName}</h3>
+                <p className="text-sm text-muted-foreground mt-2">{profileData.email}</p>
+                <div className="mt-6"><Button onClick={onLogOut} variant="outline" className="w-full text-destructive hover:bg-destructive hover:text-destructive-foreground"><LogOut className="w-4 h-4 ml-2" />خروج از حساب</Button></div>
+              </CardContent>
+            </Card>
+          </div>
+          <div className="lg:col-span-3">
+            <div className="flex justify-end mb-4"><Button onClick={() => (isEditing ? handleSaveProfile() : setIsEditing(true))}><Edit3 className="w-4 h-4 ml-2" />{isEditing ? 'ذخیره تغییرات' : 'ویرایش پروفایل'}</Button></div>
+            <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="personal"><User className="w-4 h-4 ml-2" />اطلاعات فردی</TabsTrigger>
+                <TabsTrigger value="security"><Shield className="w-4 h-4 ml-2" />امنیت</TabsTrigger>
+                <TabsTrigger value="notifications"><Bell className="w-4 h-4 ml-2" />اعلان‌ها</TabsTrigger>
+              </TabsList>
+              <TabsContent value="personal" className="mt-6">
+                <Card className="card-modern"><CardHeader><CardTitle>اطلاعات شخصی</CardTitle></CardHeader><CardContent className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2 text-right"><Label>نام کامل</Label><Input value={profileData.fullName} onChange={e => handleInputChange('fullName', e.target.value)} disabled={!isEditing} /></div>
+                      <div className="space-y-2 text-right"><Label>ایمیل</Label><Input value={profileData.email} disabled className="bg-muted" dir="ltr" /></div>
+                      <div className="space-y-2 text-right"><Label>شماره تماس</Label><Input value={profileData.phone} onChange={e => handleInputChange('phone', e.target.value)} disabled={!isEditing} dir="ltr" /></div>
+                    </div>
+                </CardContent></Card>
+              </TabsContent>
+              <TabsContent value="security" className="mt-6">
+                <Card className="card-modern"><CardHeader><CardTitle>تغییر رمز عبور</CardTitle></CardHeader><CardContent className="space-y-6">
+                    <div className="space-y-2 text-right"><Label>رمز عبور فعلی</Label><Input type="password" value={passwordForm.old_password} onChange={e => handlePasswordChange('old_password', e.target.value)} dir="ltr" /></div>
+                    <div className="space-y-2 text-right"><Label>رمز عبور جدید</Label><Input type="password" value={passwordForm.new_password} onChange={e => handlePasswordChange('new_password', e.target.value)} dir="ltr" /></div>
+                    <div className="space-y-2 text-right"><Label>تکرار رمز عبور جدید</Label><Input type="password" value={passwordForm.new_password2} onChange={e => handlePasswordChange('new_password2', e.target.value)} dir="ltr" /></div>
+                    <div className="flex justify-end"><Button onClick={handleChangePassword}>بروزرسانی رمز عبور</Button></div>
+                </CardContent></Card>
+              </TabsContent>
+              <TabsContent value="notifications" className="mt-6">
+                 <Card className="card-modern"><CardHeader><CardTitle>تنظیمات اعلان‌ها</CardTitle></CardHeader><CardContent><p>تنظیمات اعلان‌ها در نسخه‌های آینده در دسترس خواهد بود.</p></CardContent></Card>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+// end of frontend/src/components/PersianMyProfile.tsx
+// end of components/PersianMyProfile.tsx
