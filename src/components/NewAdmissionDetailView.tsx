@@ -63,6 +63,50 @@ interface NewAdmissionDetailViewProps {
 const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('fa-IR', { year: 'numeric', month: 'long', day: 'numeric' });
 const formatDateTime = (dateTimeString: string) => new Date(dateTimeString).toLocaleString('fa-IR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
+// --- (Helper object for translating decision status) ---
+const decisionMap: { [key in ApiTask['decision']]: string } = {
+    APPROVED: 'تایید شده',
+    REJECTED: 'رد شده',
+    PENDING: 'در انتظار بررسی',
+};
+
+// --- FIX START: Add translation function for log actions ---
+const translateLogAction = (action: string): string => {
+  let match;
+
+  // Task claimed by expert
+  match = action.match(/^Task for (.+) claimed\.$/);
+  if (match) return `پرونده برای دانشگاه «${match[1]}» به کارشناس ارجاع داده شد.`;
+
+  // Expert decision for a specific university
+  match = action.match(/^Approved for (.+)\.$/);
+  if (match) return `نظر برای دانشگاه «${match[1]}»: تایید شد.`;
+  
+  match = action.match(/^Rejected for (.+)\.$/);
+  if (match) return `نظر برای دانشگاه «${match[1]}»: رد شد.`;
+
+  // Task reassigned by admin
+  match = action.match(/^Task for (.+) reassigned from (.+) to (.+) by admin\.$/);
+  if (match) return `پرونده برای دانشگاه «${match[1]}» توسط ادمین از ${match[2]} به ${match[3]} ارجاع داده شد.`;
+
+  // Static actions
+  switch (action) {
+    case 'Application submitted.':
+      return 'درخواست ثبت شد.';
+    case 'Application resubmitted after correction.':
+      return 'درخواست پس از اصلاح مجددا ارسال شد.';
+    case 'Application requires correction.':
+      return 'درخواست برای اصلاح به متقاضی بازگردانده شد.';
+    case 'Final decision reached: Approved.':
+      return 'تصمیم نهایی: تایید شده.';
+    case 'Final decision reached: Rejected.':
+      return 'تصمیم نهایی: رد شده.';
+    default:
+      return action; // Fallback to the original English string if no match is found
+  }
+};
+// --- FIX END ---
+
 export function NewAdmissionDetailView({ applicationId, onBack, backLabel = "بازگشت" }: NewAdmissionDetailViewProps) {
   const { user } = useAuth();
   const [application, setApplication] = useState<ApiApplicationDetail | null>(null);
@@ -100,7 +144,6 @@ export function NewAdmissionDetailView({ applicationId, onBack, backLabel = "ب�
     }
   }, [applicationId]);
 
-  // --- FUNCTION IMPLEMENTED ---
   const handleClaimTask = async (universityPk: number) => {
     setIsClaiming(true);
     try {
@@ -114,12 +157,19 @@ export function NewAdmissionDetailView({ applicationId, onBack, backLabel = "ب�
     }
   };
 
-  // --- FUNCTION IMPLEMENTED ---
   const handleExpertAction = async (action: 'APPROVE' | 'REJECT' | 'CORRECT', universityPk: number, comment?: string) => {
     setIsSubmittingAction(true);
     try {
       await apiService.post(`/v1/applications/${applicationId}/action/${universityPk}/`, { action, comment: comment || '' });
-      toast.success(`اقدام '${action}' با موفقیت ثبت شد!`);
+
+      if (action === 'REJECT') {
+        toast.error("درخواست با موفقیت رد شد.");
+      } else if (action === 'APPROVE') {
+        toast.success("درخواست با موفقیت تایید شد.");
+      } else { // 'CORRECT'
+        toast.info("درخواست برای اصلاح بازگردانده شد.");
+      }
+      
       setShowRejectModal(false);
       setShowCorrectionModal(false);
       setRejectReason('');
@@ -172,7 +222,15 @@ export function NewAdmissionDetailView({ applicationId, onBack, backLabel = "ب�
           <Card className="card-modern border-primary/20"><CardHeader><CardTitle className="flex items-center"><Edit className="w-5 h-5 ml-2 text-primary" />اقدامات کارشناس ({expertTaskForMyUni.university.name})</CardTitle></CardHeader><CardContent>
             {expertTaskForMyUni.status === 'UNCLAIMED' && application.status === 'PENDING_REVIEW' && <Button onClick={() => handleClaimTask(expertTaskForMyUni.university.id)} disabled={isClaiming} className="w-full text-lg py-6">{isClaiming ? <RefreshCw className="w-5 h-5 animate-spin"/> : "ارجاع به خود"}</Button>}
             {expertTaskForMyUni.status === 'ASSIGNED' && application.status === 'PENDING_REVIEW' && <div className="flex flex-col sm:flex-row gap-4"><Button onClick={() => handleExpertAction('APPROVE', expertTaskForMyUni.university.id)} disabled={isSubmittingAction} className="flex-1 bg-success hover:bg-success/90">تایید</Button><Button variant="outline" onClick={() => setShowCorrectionModal(true)} disabled={isSubmittingAction} className="flex-1">ارسال برای اصلاح</Button><Button variant="destructive" onClick={() => setShowRejectModal(true)} disabled={isSubmittingAction} className="flex-1">رد درخواست</Button></div>}
-            {expertTaskForMyUni.status === 'COMPLETED' && <div className="text-center text-success p-4 bg-success/10 rounded-lg"><p>شما نظر خود را برای این دانشگاه ثبت کرده‌اید: <strong>{expertTaskForMyUni.decision}</strong></p></div>}
+            {expertTaskForMyUni.status === 'COMPLETED' && (
+              <div className={`text-center p-4 rounded-lg ${
+                expertTaskForMyUni.decision === 'APPROVED' 
+                  ? 'bg-success/10 text-success' 
+                  : 'bg-destructive/10 text-destructive'
+              }`}>
+                <p>شما نظر خود را برای این دانشگاه ثبت کرده‌اید: <strong>{decisionMap[expertTaskForMyUni.decision] || expertTaskForMyUni.decision}</strong></p>
+              </div>
+            )}
           </CardContent></Card>
         )}
 
@@ -214,7 +272,7 @@ export function NewAdmissionDetailView({ applicationId, onBack, backLabel = "ب�
             </Card>
         )}
 
-        <Card className="card-modern"><CardHeader><CardTitle className="flex items-center"><MessageSquare className="w-5 h-5 ml-2" />تاریخچه درخواست</CardTitle></CardHeader><CardContent className="space-y-6">{application.logs.map(log => <div key={log.id} className="flex items-start space-x-4 space-x-reverse"><div className="flex-1 min-w-0"><div className="bg-muted/30 rounded-lg p-4"><div className="flex items-center justify-between mb-2"><p className="font-medium">{log.action}</p><p className="text-sm text-muted-foreground">{formatDateTime(log.timestamp)}</p></div><p className="text-sm text-muted-foreground mb-3">توسط: {log.actor ? log.actor.full_name : 'سیستم'}</p>{log.comment && <p className="text-sm border-r-2 border-primary pr-2 bg-background p-2 rounded">{log.comment}</p>}</div></div></div>)}</CardContent></Card>
+        <Card className="card-modern"><CardHeader><CardTitle className="flex items-center"><MessageSquare className="w-5 h-5 ml-2" />تاریخچه درخواست</CardTitle></CardHeader><CardContent className="space-y-6">{application.logs.map(log => <div key={log.id} className="flex items-start space-x-4 space-x-reverse"><div className="flex-1 min-w-0"><div className="bg-muted/30 rounded-lg p-4"><div className="flex items-center justify-between mb-2"><p className="font-medium">{translateLogAction(log.action)}</p><p className="text-sm text-muted-foreground">{formatDateTime(log.timestamp)}</p></div><p className="text-sm text-muted-foreground mb-3">توسط: {log.actor ? log.actor.full_name : 'سیستم'}</p>{log.comment && <p className="text-sm border-r-2 border-primary pr-2 bg-background p-2 rounded">{log.comment}</p>}</div></div></div>)}</CardContent></Card>
       </div>
 
       <Dialog open={showRejectModal} onOpenChange={setShowRejectModal}><DialogContent dir="rtl"><DialogHeader><DialogTitle>شرح علت رد درخواست</DialogTitle></DialogHeader><div className="py-4 space-y-2"><Label htmlFor="reject-reason">علت رد (اجباری)</Label><Textarea id="reject-reason" value={rejectReason} onChange={e => setRejectReason(e.target.value)} className="min-h-32" /></div><DialogFooter><Button variant="outline" onClick={() => setShowRejectModal(false)}>انصراف</Button><Button variant="destructive" onClick={() => handleExpertAction('REJECT', expertTaskForMyUni!.university.id, rejectReason)} disabled={isSubmittingAction || !rejectReason.trim()}>{isSubmittingAction ? "..." : "تایید رد"}</Button></DialogFooter></DialogContent></Dialog>

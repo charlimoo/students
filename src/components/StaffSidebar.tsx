@@ -1,12 +1,13 @@
 // start of components/StaffSidebar.tsx
 import React from 'react';
 import { Button } from './ui/button';
-import { Avatar, AvatarFallback } from './ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import {
   GraduationCap,
   X,
   LogOut
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 interface SidebarItem {
   id: string;
@@ -22,10 +23,16 @@ interface StaffSidebarProps {
   onClose: () => void;
   mainTitle: string;
   subTitle: string;
-  onLogout: () => void; // --- FIX: This prop is now correctly defined
+  onLogout: () => void;
 }
 
+// --- FIX: Modified to show only the very first letter of the name ---
+const getInitials = (name: string = '') => 
+    name.charAt(0).toUpperCase() || '...';
+
 export function StaffSidebar({ items, isOpen, onNavigate, onClose, subTitle, mainTitle, onLogout }: StaffSidebarProps) {
+  const { user } = useAuth();
+  
   const handleNavigate = (page: string) => {
     onNavigate(page);
     onClose();
@@ -79,21 +86,23 @@ export function StaffSidebar({ items, isOpen, onNavigate, onClose, subTitle, mai
         <div className="mt-auto p-4 border-t border-sidebar-border">
           <div className="bg-primary-50 rounded-xl p-4">
               <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3 space-x-reverse">
+                  <div className="flex items-center space-x-3 space-x-reverse gap-2">
                       <Avatar className="w-10 h-10">
-                          <AvatarFallback className="bg-primary text-primary-foreground">ا.م</AvatarFallback>
+                          <AvatarImage src={user?.profile_picture || undefined} alt={user?.full_name} />
+                          <AvatarFallback className="bg-primary text-primary-foreground">
+                            {getInitials(user?.full_name)}
+                          </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-primary text-sm">احمد محمدی</h3>
-                          <p className="text-xs text-primary/80 truncate">کارشناس ارشد</p>
+                          <h3 className="font-medium text-primary text-sm">{user?.full_name || '...'}</h3>
+                          <p className="text-xs text-primary/80 truncate">{user?.roles?.[0]?.name || 'Staff'}</p>
                       </div>
                   </div>
-                  {/* --- FIX: ADDED onClick HANDLER TO THE LOGOUT BUTTON --- */}
                   <Button 
                     variant="ghost" 
                     size="sm" 
                     className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                    onClick={onLogout} // This line fixes the bug
+                    onClick={onLogout}
                     title="خروج از حساب"
                   >
                       <LogOut className="w-5 h-5" />

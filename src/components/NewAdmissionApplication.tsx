@@ -1,5 +1,3 @@
-// start of components/NewAdmissionApplication.tsx
-// src/components/NewAdmissionApplication.tsx
 import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Progress } from './ui/progress';
@@ -140,17 +138,64 @@ export function NewAdmissionApplication({ onBackToDashboard, onNavigate, applica
         } catch (error: any) {
             if (error.response && error.response.status === 400) {
                 const apiErrors = error.response.data;
-                const flatErrors: Record<string, string> = {};
-                let detailedErrorDescription = "Please correct the following issues: ";
+                const newValidationErrors: Record<string, string> = {};
+                const errorMessages: { field: string; message: string }[] = [];
+
+                // --- FIX: Add a recursive helper function to parse nested API errors ---
+                const parseApiError = (err: any): string => {
+                    if (typeof err === 'string') return err;
+                    if (Array.isArray(err)) return err.map(parseApiError).join(', ');
+                    if (typeof err === 'object' && err !== null) {
+                        return Object.entries(err)
+                            .map(([key, value]) => {
+                                const prettyKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                                return `${isNaN(Number(key)) ? `${prettyKey}: ` : ''}${parseApiError(value)}`;
+                            }).join('; ');
+                    }
+                    return 'Invalid error format';
+                };
+
+                const fieldMapping: Record<string, string> = {
+                    full_name: 'fullName', father_name: 'fatherName', grandfather_name: 'grandfatherName',
+                    date_of_birth: 'birthDate', country_of_residence: 'nationality', email: 'email',
+                    academic_histories: 'academicRecords', university_choices: 'universityPrograms', documents: 'documentUploads',
+                };
+
+                let hasNavigated = false;
                 Object.keys(apiErrors).forEach(key => {
-                    const errorMsg = Array.isArray(apiErrors[key]) ? apiErrors[key].join(' ') : String(apiErrors[key]);
-                    flatErrors[key] = errorMsg;
+                    const frontendKey = fieldMapping[key] || key;
+                    // --- FIX: Use the new parser to get a clean error message ---
+                    const errorMsg = parseApiError(apiErrors[key]);
+                    newValidationErrors[frontendKey] = errorMsg;
+                    
                     const prettyKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                    detailedErrorDescription += `\n- ${prettyKey}: ${errorMsg}`;
+                    errorMessages.push({ field: prettyKey, message: errorMsg });
+
+                    if (!hasNavigated) {
+                        const stepIdToFind = 
+                            ['fullName', 'fatherName', 'grandfatherName', 'birthDate', 'nationality', 'email'].includes(frontendKey) ? 1 :
+                            frontendKey === 'academicRecords' ? 2 :
+                            frontendKey === 'universityPrograms' ? 3 :
+                            frontendKey === 'documentUploads' ? 4 : -1;
+                        
+                        const stepIndex = steps.findIndex(s => s.id === stepIdToFind);
+                        if (stepIndex !== -1) {
+                            setCurrentStep(stepIndex + 1);
+                            hasNavigated = true;
+                        }
+                    }
                 });
-                setValidationErrors(flatErrors);
-                toast.error("Submission Failed", { 
-                    description: <pre className="whitespace-pre-wrap text-xs">{detailedErrorDescription}</pre>,
+                
+                setValidationErrors(newValidationErrors);
+                toast.error("Submission Failed: Please Review Your Application", { 
+                    description: (
+                      <div className="text-xs">
+                        <p className="mb-2">Errors were found in your application. We've taken you to the first step with an issue.</p>
+                        <ul className="list-disc list-inside space-y-1">
+                          {errorMessages.map((e, i) => <li key={i}><strong>{e.field}:</strong> {e.message}</li>)}
+                        </ul>
+                      </div>
+                    ),
                     duration: 10000,
                 });
             } else {
@@ -164,7 +209,6 @@ export function NewAdmissionApplication({ onBackToDashboard, onNavigate, applica
     };
 
   const renderStepContent = () => {
-    // --- FIX: Correctly pass handleInputChange as the onInputChange prop ---
     const stepProps = { formData, onInputChange: handleInputChange, validationErrors };
     
     let stepComponent;
@@ -220,4 +264,3 @@ export function NewAdmissionApplication({ onBackToDashboard, onNavigate, applica
     </div>
   );
 }
-// end of components/NewAdmissionApplication.tsx

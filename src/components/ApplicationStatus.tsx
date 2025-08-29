@@ -149,7 +149,9 @@ export function ApplicationStatus({ applicationId, onBack, onNavigate }: Applica
               <CardContent className="space-y-4">
                 {application.logs.map((log) => (
                   <div key={log.id} className="flex items-start space-x-4">
-                    <div className="mt-1">{statusMap[application.status]?.icon || <Clock className="w-5 h-5 text-muted-foreground" />}</div>
+                    {/* --- FIX START: Use a consistent icon for all log entries --- */}
+                    <div className="mt-1"><Clock className="w-5 h-5 text-muted-foreground" /></div>
+                    {/* --- FIX END --- */}
                     <div className="flex-1">
                       <strong>{log.action}</strong> by {log.actor?.full_name || 'System'}
                       <div className="text-xs text-muted-foreground">{formatDateTime(log.timestamp)}</div>

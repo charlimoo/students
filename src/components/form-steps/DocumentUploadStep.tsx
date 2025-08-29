@@ -1,32 +1,23 @@
-// start of components/form-steps/DocumentUploadStep.tsx
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import { Plus, Trash2, Upload, File, Download } from 'lucide-react';
+import { Plus, Trash2, Upload, File, Download, AlertCircle } from 'lucide-react';
 import { FormStepProps, DocumentUpload } from '../types/form-types';
 import { DOCUMENT_TYPE_OPTIONS } from '../constants/form-constants';
 
-// --- FIX: Add a prop to receive existing documents ---
 interface DocumentUploadStepProps extends Omit<FormStepProps, 'onFileUpload'> {
   existingDocuments: { document_type: string; file: string; }[];
 }
 
-export function DocumentUploadStep({ formData, onInputChange, existingDocuments }: DocumentUploadStepProps) {
+// --- FIX: Provide a default empty object for validationErrors to prevent 'undefined' errors ---
+export function DocumentUploadStep({ formData, onInputChange, existingDocuments, validationErrors = {} }: DocumentUploadStepProps) {
   const [documentUploads, setDocumentUploads] = React.useState<DocumentUpload[]>(
     formData.documentUploads && formData.documentUploads.length > 0 
       ? formData.documentUploads 
       : [{ id: Date.now().toString(), documentType: '', file: null }]
   );
-  
-  // This effect ensures the component starts with a clean slate for new uploads
-  // when it first mounts, which is correct for both create and edit modes.
-  useEffect(() => {
-    const initialDocs = [{ id: Date.now().toString(), documentType: '', file: null }];
-    setDocumentUploads(initialDocs);
-    onInputChange('documentUploads', initialDocs);
-  }, []);
 
   const handleDocumentChange = (id: string, key: 'documentType' | 'file', value: any) => {
     const updated = documentUploads.map(doc => doc.id === id ? { ...doc, [key]: value } : doc);
@@ -70,7 +61,13 @@ export function DocumentUploadStep({ formData, onInputChange, existingDocuments 
       </CardHeader>
       <CardContent className="space-y-6">
         
-        {/* --- FIX START: Display Existing Documents --- */}
+        {validationErrors.documentUploads && (
+          <div className="flex items-center p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
+            <AlertCircle className="w-4 h-4 mr-2" />
+            {validationErrors.documentUploads}
+          </div>
+        )}
+
         {existingDocuments && existingDocuments.length > 0 && (
           <div className="space-y-3">
             <h4 className="font-semibold text-foreground">Previously Submitted Documents</h4>
@@ -92,7 +89,6 @@ export function DocumentUploadStep({ formData, onInputChange, existingDocuments 
             </div>
           </div>
         )}
-        {/* --- FIX END --- */}
 
         <div className="space-y-3 pt-4 border-t">
           <h4 className="font-semibold text-foreground">Add New or Replacement Documents</h4>
@@ -146,4 +142,3 @@ export function DocumentUploadStep({ formData, onInputChange, existingDocuments 
     </Card>
   );
 }
-// end of components/form-steps/DocumentUploadStep.tsx

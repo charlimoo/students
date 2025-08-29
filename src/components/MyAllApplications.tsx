@@ -94,8 +94,6 @@ export function MyAllApplications({ onNavigate, onViewCase }: MyAllApplicationsP
                 <div className="flex justify-between items-center">
                   <CardTitle>همه درخواست‌ها</CardTitle>
                   <div className="flex bg-muted rounded-lg p-1">
-                    <button onClick={() => setViewMode('table')} className={`px-3 py-1.5 text-xs font-medium rounded-md ${viewMode === 'table' ? 'bg-background shadow-sm' : 'text-muted-foreground'}`}><List className="w-4 h-4" /></button>
-                    <button onClick={() => setViewMode('card')} className={`px-3 py-1.5 text-xs font-medium rounded-md ${viewMode === 'card' ? 'bg-background shadow-sm' : 'text-muted-foreground'}`}><Grid3X3 className="w-4 h-4" /></button>
                   </div>
                 </div>
               </CardHeader>

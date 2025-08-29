@@ -75,28 +75,14 @@ export function ApplicantDetailView({ applicantId, onBack }: ApplicantDetailView
             <span>بازگشت به لیست متقاضیان</span>
         </button>
       
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-1 space-y-6">
-                <Card className="card-modern">
-                    <CardHeader className="text-center pb-4">
-                        <Avatar className="w-24 h-24 mx-auto border-4 border-primary/10">
-                            <AvatarFallback className="bg-primary text-primary-foreground text-2xl">{application.full_name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                        </Avatar>
-                        <CardTitle className="text-xl mt-4">{application.full_name}</CardTitle>
-                        <div className="flex items-center justify-center space-x-2 space-x-reverse mt-2 text-muted-foreground">
-                            <Globe className="w-4 h-4" /><span>{application.country_of_residence}</span>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex items-center space-x-3 space-x-reverse"><Phone className="w-4 h-4 text-primary" /><span>{application.phone_number || 'ثبت نشده'}</span></div>
-                        <div className="flex items-center space-x-3 space-x-reverse"><Mail className="w-4 h-4 text-primary" /><span>{application.email}</span></div>
-                    </CardContent>
-                </Card>
-            </div>
+        <div >
             <div className="lg:col-span-2 space-y-6">
+
+
                 <Card className="card-modern">
                     <CardHeader><CardTitle className="flex items-center">خلاصه درخواست</CardTitle></CardHeader>
                     <CardContent className="grid grid-cols-2 gap-4 text-sm">
+                        <p>نام کامل: </p><strong>{application.full_name}</strong>
                         <div><strong className="text-muted-foreground">تاریخ تولد:</strong> {formatDate(application.date_of_birth)}</div>
                         <div><strong className="text-muted-foreground">وضعیت:</strong> {getStatusBadge(application.status)}</div>
                     </CardContent>

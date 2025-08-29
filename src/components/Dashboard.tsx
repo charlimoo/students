@@ -4,7 +4,7 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { FileCheck, AlertCircle, MessageSquare, TrendingUp, Clock, CheckCircle2, Eye, RefreshCw } from 'lucide-react';
+import { FileCheck, AlertCircle, MessageSquare, Clock, CheckCircle2, Eye, RefreshCw, AlertTriangle, XCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import apiService from '../api/apiService';
 import { toast } from 'sonner';
@@ -18,7 +18,8 @@ interface DashboardProps {
 interface DashboardStats {
   my_applications?: {
     total: number;
-    pending: number; // Includes PENDING_REVIEW and PENDING_CORRECTION
+    pending: number; // PENDING_REVIEW
+    requires_action: number; // PENDING_CORRECTION
     approved: number;
     rejected: number;
   };
@@ -45,9 +46,10 @@ const statusMap: { [key: string]: string } = {
 
 const getStatusBadge = (statusKey: string) => {
   switch (statusKey) {
-    case 'approved': return <Badge className="bg-emerald-600 text-white hover:bg-emerald-700">Approved</Badge>;
-    case 'under-review': return <Badge className="bg-amber-500 text-white hover:bg-amber-600">Under Review</Badge>;
-    case 'requires-action': return <Badge className="bg-red-600 text-white hover:bg-red-700">Requires Action</Badge>;
+    case 'approved': return <Badge className="bg-success/10 text-success border-success/20"><CheckCircle2 className="w-3 h-3 mr-1" />Approved</Badge>;
+    case 'under-review': return <Badge className="bg-primary/10 text-primary border-primary/20"><Clock className="w-3 h-3 mr-1" />Under Review</Badge>;
+    case 'requires-action': return <Badge className="bg-warning/10 text-warning border-warning/20"><AlertTriangle className="w-3 h-3 mr-1" />Requires Action</Badge>;
+    case 'rejected': return <Badge className="bg-destructive/10 text-destructive border-destructive/20"><XCircle className="w-3 h-3 mr-1" />Rejected</Badge>;
     default: return <Badge variant="secondary">{statusKey}</Badge>;
   }
 };
@@ -111,9 +113,7 @@ export function Dashboard({ onNavigate, onViewApplication }: DashboardProps) {
                     <div className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl md:rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg">
                       <FileCheck className="w-6 h-6 md:w-7 md:h-7 text-white drop-shadow-sm" />
                     </div>
-                    <div className="absolute -top-1 -right-1 w-5 h-5 md:w-6 md:h-6 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center shadow-md">
-                      <span className="text-xs font-bold text-white">2</span>
-                    </div>
+
                   </div>
                 </div>
               </CardContent>
@@ -127,7 +127,7 @@ export function Dashboard({ onNavigate, onViewApplication }: DashboardProps) {
                 <div className="flex items-center justify-between">
                   <div className="space-y-2">
                     <p className="text-xs font-semibold text-amber-800 group-hover:text-amber-900 transition-colors uppercase tracking-wide">Action Required</p>
-                    <p className="text-3xl md:text-4xl font-bold text-amber-900 group-hover:scale-105 transition-transform duration-300" style={{ fontFamily: 'Inter, system-ui, sans-serif', fontWeight: '800', letterSpacing: '-0.025em' }}>{isLoading ? '...' : 0}</p>
+                    <p className="text-3xl md:text-4xl font-bold text-amber-900 group-hover:scale-105 transition-transform duration-300" style={{ fontFamily: 'Inter, system-ui, sans-serif', fontWeight: '800', letterSpacing: '-0.025em' }}>{isLoading ? '...' : stats?.my_applications?.requires_action ?? 0}</p>
                     <div className="flex items-center space-x-1 text-xs text-amber-700 font-medium">
 
                     </div>
@@ -135,9 +135,6 @@ export function Dashboard({ onNavigate, onViewApplication }: DashboardProps) {
                   <div className="relative">
                     <div className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-amber-600 to-orange-600 rounded-xl md:rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg">
                       <AlertCircle className="w-6 h-6 md:w-7 md:h-7 text-white drop-shadow-sm" />
-                    </div>
-                    <div className="absolute -top-1 -right-1 w-5 h-5 md:w-6 md:h-6 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center animate-pulse shadow-md">
-                      <span className="text-xs font-bold text-white">!</span>
                     </div>
                   </div>
                 </div>
@@ -161,9 +158,6 @@ export function Dashboard({ onNavigate, onViewApplication }: DashboardProps) {
                   <div className="relative">
                     <div className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-xl md:rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg">
                       <MessageSquare className="w-6 h-6 md:w-7 md:h-7 text-white drop-shadow-sm" />
-                    </div>
-                    <div className="absolute -top-1 -right-1 w-5 h-5 md:w-6 md:h-6 bg-gradient-to-br from-pink-500 to-pink-600 rounded-full flex items-center justify-center shadow-md">
-                      <span className="text-xs font-bold text-white">3</span>
                     </div>
                   </div>
                 </div>
@@ -222,4 +216,3 @@ export function Dashboard({ onNavigate, onViewApplication }: DashboardProps) {
     </div>
   );
 }
-// end of frontend/src/components/Dashboard.tsx

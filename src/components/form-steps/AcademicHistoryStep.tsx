@@ -5,11 +5,12 @@ import { Label } from '../ui/label';
 import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import { GraduationCap, Plus, Trash2, Upload } from 'lucide-react';
+import { GraduationCap, Plus, Trash2, Upload, AlertCircle } from 'lucide-react';
 import { FormStepProps, AcademicRecord } from '../types/form-types';
 import { DEGREE_OPTIONS, COUNTRY_OPTIONS } from '../constants/form-constants';
 
-export function AcademicHistoryStep({ formData, onInputChange }: Omit<FormStepProps, 'onFileUpload'>) {
+// --- FIX: Destructure validationErrors and provide a default to handle section-level errors ---
+export function AcademicHistoryStep({ formData, onInputChange, validationErrors = {} }: Omit<FormStepProps, 'onFileUpload'>) {
   const [academicRecords, setAcademicRecords] = useState<AcademicRecord[]>(formData.academicRecords || []);
   const [newRecord, setNewRecord] = useState<Partial<AcademicRecord>>({ degree: '', country: '', university: '', field: '', gpa: '', documentFile: null });
 
@@ -35,8 +36,21 @@ export function AcademicHistoryStep({ formData, onInputChange }: Omit<FormStepPr
   
   return (
     <Card className="card-modern" dir="ltr">
-      <CardHeader><CardTitle className="flex items-center space-x-2"><GraduationCap className="w-5 h-5 text-primary" /><span>Academic History</span></CardTitle></CardHeader>
+      <CardHeader>
+        <CardTitle className="flex items-center space-x-2">
+            <GraduationCap className="w-5 h-5 text-primary" />
+            <span>Academic History</span>
+        </CardTitle>
+      </CardHeader>
       <CardContent className="space-y-6">
+        {/* --- FIX: Display section-level validation errors for academic history --- */}
+        {validationErrors.academicRecords && (
+          <div className="flex items-center p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
+            <AlertCircle className="w-4 h-4 mr-2" />
+            {validationErrors.academicRecords}
+          </div>
+        )}
+
         <div className="border rounded-lg overflow-hidden"><Table><TableHeader><TableRow><TableHead>Degree</TableHead><TableHead>Country</TableHead><TableHead>University</TableHead><TableHead>Field of Study</TableHead><TableHead>GPA</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader><TableBody>
           {academicRecords.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No academic records added yet.</TableCell></TableRow> : academicRecords.map(record => (
             <TableRow key={record.id}>
@@ -55,7 +69,8 @@ export function AcademicHistoryStep({ formData, onInputChange }: Omit<FormStepPr
             <Select value={newRecord.country} onValueChange={(v) => setNewRecord(p => ({...p, country: v}))}><SelectTrigger><SelectValue placeholder="Country *" /></SelectTrigger><SelectContent>{COUNTRY_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent></Select>
             <Input value={newRecord.university} onChange={e => setNewRecord(p=>({...p, university: e.target.value}))} placeholder="University Name *" />
             <Input value={newRecord.field} onChange={e => setNewRecord(p=>({...p, field: e.target.value}))} placeholder="Field of Study *" />
-            <Input value={newRecord.gpa} onChange={e => setNewRecord(p=>({...p, gpa: e.target.value}))} placeholder="GPA *" />
+            {/* --- FIX: Change input type to "number" for better validation and UX --- */}
+            <Input type="number" step="0.01" value={newRecord.gpa} onChange={e => setNewRecord(p=>({...p, gpa: e.target.value}))} placeholder="GPA *" />
           </div>
           <div className="flex justify-end"><Button type="button" onClick={handleAddRecord} disabled={!newRecord.degree || !newRecord.country || !newRecord.university || !newRecord.field || !newRecord.gpa}><Plus className="w-4 h-4 mr-2" />Add Record</Button></div>
         </div>

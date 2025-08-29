@@ -162,7 +162,7 @@ export function LoginPage({ onNavigate, onSignUp, onInstitutionSignUp, onStaffSi
       <div className="absolute top-6 right-6 z-10">
         <Select value={language} onValueChange={(value: Language) => setLanguage(value)}>
           <SelectTrigger className={`w-32 bg-white/90 backdrop-blur-sm border-white/20 shadow-sm ${isRTL ? 'persian-text' : ''}`}>
-            <div className="flex items-center space-x-2 space-x-reverse">
+            <div className="flex items-center space-x-2 space-x-reverse gap-2">
               <Globe className="w-4 h-4 text-muted-foreground" />
               <SelectValue />
             </div>
